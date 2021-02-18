@@ -152,7 +152,7 @@ class TestMecha(TestCase):
         # --------------------------------------------------------------------------------------------------------------
         reset_displacement_at_time_step = False
         # p.solve_newton_0(mat, reset_displacement_at_time_step)
-        p.solve_newton_1(mat, reset_displacement_at_time_step)
+        p.solve_newton_1(mat)
         # p.solve_newton_check_1(mat, reset_displacement_at_time_step)
         # p.solve_newton_exact(mat, reset_displacement_at_time_step)
         # --------------------------------------------------------------------------------------------------------------

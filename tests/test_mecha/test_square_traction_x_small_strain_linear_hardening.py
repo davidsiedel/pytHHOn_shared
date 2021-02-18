@@ -43,7 +43,7 @@ class TestMecha(TestCase):
         # time_steps = [0.0, 7.e-3, 1.e-2, 2.e-2, -3.e-2, 4.e-2]
         # time_steps = [0.0, 7.e-3, 1.e-2]
 
-        iterations = 100
+        iterations = 15
 
         # ------------------------
         # LOAD
@@ -160,7 +160,7 @@ class TestMecha(TestCase):
         # --------------------------------------------------------------------------------------------------------------
         reset_displacement_at_time_step = False
         # p.solve_newton_0(mat, reset_displacement_at_time_step)
-        p.solve_newton_1(mat, reset_displacement_at_time_step)
+        p.solve_newton_1(mat)
         # p.solve_newton_check_1(mat, reset_displacement_at_time_step)
         # --------------------------------------------------------------------------------------------------------------
         # PROCESS RESULTS
