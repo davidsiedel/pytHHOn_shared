@@ -1,0 +1,22 @@
+@Author Thomas Helfer;
+@Date   11/02/2021;
+@Description{
+
+};
+
+@ModellingHypothesis 'PlaneStrain';
+@Behaviour<generic> '/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so' 'IsotropicLinearHardeningPlasticity';
+
+// external state variable
+@ExternalStateVariable 'Temperature' 293.15;
+
+@ImposedStrain 'EYY' {
+  0 : 0,
+  1 : 7.e-3,
+  2 : -1.e-2,
+  3 : 2.e-2,
+  4 : -3e-2,
+  5 : 4e-2
+};
+
+@Times{0, 5 in 10};

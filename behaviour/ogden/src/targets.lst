@@ -1,0 +1,38 @@
+{
+library : {
+name   : "Behaviour";
+type   : SHARED_LIBRARY;
+prefix : "lib";
+suffix : "so";
+install_path : "";
+sources : {
+"Ogden-generic.cxx",
+"Ogden.cxx"
+};
+cppflags : {
+"$(shell tfel-config --cppflags --compiler-flags)"
+};
+include_directories : {
+"$(shell tfel-config --include-path)"
+};
+link_directories : {
+"$(shell tfel-config --library-path)"
+};
+link_libraries : {
+"$(shell tfel-config --library-dependency --material --mfront-profiling)"
+};
+epts : {
+"Ogden_AxisymmetricalGeneralisedPlaneStrain",
+"Ogden_Axisymmetrical",
+"Ogden_PlaneStrain",
+"Ogden_GeneralisedPlaneStrain",
+"Ogden_Tridimensional"
+};
+};
+headers : {
+"MFront/GenericBehaviour/Ogden-generic.hxx",
+"TFEL/Material/Ogden.hxx",
+"TFEL/Material/OgdenBehaviourData.hxx",
+"TFEL/Material/OgdenIntegrationData.hxx"
+};
+};
