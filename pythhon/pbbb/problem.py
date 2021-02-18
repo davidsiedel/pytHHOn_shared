@@ -142,7 +142,7 @@ class Problem:
                 res_qdp_file.write("STRESS_{},".format(stress_component))
             res_qdp_file.write("\n")
 
-    def write_vertex_res_files(self, suffix: str, unknown_increment: ndarray):
+    def write_vertex_res_files(self, suffix: str):
         """
 
         Args:
@@ -161,12 +161,17 @@ class Problem:
                 for c, cell_vertices_connectivity in enumerate(self.mesh.cells_vertices_connectivity):
                     if vertex_count in cell_vertices_connectivity:
                         for u_dir in range(self.field.field_dimension):
+                            # vertex_field_value[u_dir] += self.elements[c].get_cell_field_increment_value(
+                            #     point=vertex,
+                            #     direction=u_dir,
+                            #     field=self.field,
+                            #     finite_element=self.finite_element,
+                            #     element_unknown_vector=unknown_increment,
+                            # )
                             vertex_field_value[u_dir] += self.elements[c].get_cell_field_increment_value(
                                 point=vertex,
                                 direction=u_dir,
-                                field=self.field,
                                 finite_element=self.finite_element,
-                                global_vector=unknown_increment,
                             )
                 vertex_field_value = vertex_field_value / self.mesh.vertices_weights_cell[vertex_count]
                 for u_dir in range(self.field.field_dimension):
@@ -174,7 +179,7 @@ class Problem:
                 res_vtx_file.write("\n")
         return
 
-    def write_quadrature_points_res_files(self, suffix: str, unknown_increment: ndarray, material: Material):
+    def write_quadrature_points_res_files(self, suffix: str, material: Material):
         """
 
         Args:
@@ -193,12 +198,17 @@ class Problem:
                     for x_dir in range(self.field.euclidean_dimension):
                         res_qdp_file.write("{},".format(x_q_c[x_dir]))
                     for u_dir in range(self.field.field_dimension):
+                        # quad_point_field_value = element.get_cell_field_increment_value(
+                        #     point=x_q_c,
+                        #     direction=u_dir,
+                        #     field=self.field,
+                        #     finite_element=self.finite_element,
+                        #     element_unknown_vector=unknown_increment,
+                        # )
                         quad_point_field_value = element.get_cell_field_increment_value(
                             point=x_q_c,
                             direction=u_dir,
-                            field=self.field,
                             finite_element=self.finite_element,
-                            global_vector=unknown_increment,
                         )
                         res_qdp_file.write("{},".format(quad_point_field_value))
                     for g_dir in range(self.field.gradient_dimension):
@@ -263,16 +273,14 @@ class Problem:
             material.set_temperature()
             correction = np.zeros((_constrained_system_size))
             # --- PRINT DATA
-            print("||||||||||||||||||||||||||||||||||")
-            print("TIME_STEP : {}".format(time_step))
+            print("---- TIME_STEP : {} | TIME_VAL : {:.2f} ----".format(str(time_step_index).zfill(6), time_step))
             # --- WRITE RES FILES
             residual_values = []
             file_suffix = "{}".format(time_step_index).zfill(6)
             self.create_vertex_res_files(file_suffix)
             self.create_quadrature_points_res_files(file_suffix)
             for iteration in range(self.number_of_iterations):
-                print("=======================")
-                print("ITERATION : {}".format(iteration))
+                print("-- ITERATION : {} --".format(str(iteration).zfill(6)))
                 # --------------------------------------------------------------------------------------------------
                 # SET SYSTEM MATRIX AND VECTOR
                 # --------------------------------------------------------------------------------------------------
@@ -291,19 +299,19 @@ class Problem:
                 # --------------------------------------------------------------------------------------------------
                 _qp = 0
                 for _element_index, element in enumerate(self.elements):
-                    # --- GET ELEMENT UNKNOWN CORRECTION
-                    # element_unknown_correction = np.copy(element.get_element_unknwon_correction(
-                    #     # self.field, self.finite_element, unknown_vector
-                    #     self.field, self.finite_element, correction
-                    # ))
-                    element_unknown_correction = element.get_element_unknwon_correction(
-                        self.field, self.finite_element, correction
-                    )
-                    element.element_unknown_vector += element_unknown_correction
-                    print("-------------")
-                    print("ELEM : {}".format(_element_index))
-                    # print(" * ELEM_CORRECTION : \n{}".format(element_unknown_correction))
-                    # print(" * ELEM_CURRENT_DISPLACEMENT : \n{}".format(element.element_unknown_vector))
+                    _nf = len(element.faces)
+                    _c0_c = _dx * _cl
+                    # --- DECONDENSATION - GET ELEMENT UNKNOWN CORRECTION
+                    element_correction = np.zeros((element.element_size,))
+                    for _i_local, _i_global in enumerate(element.faces_indices):
+                        _c0_fg = _i_global * (_fk * _dx)
+                        _c1_fg = (_i_global + 1) * (_fk * _dx)
+                        _c0_fl = (_dx * _cl) + _i_local * (_fk * _dx)
+                        _c1_fl = (_dx * _cl) + (_i_local + 1) * (_fk * _dx)
+                        element_correction[_c0_fl:_c1_fl] += correction[_c0_fg:_c1_fg]
+                    element_correction[:_c0_c] = element.m_cell_cell_inv @ (element.v_cell - element.m_cell_faces @ element_correction[_c0_c:])
+                    # --- ADDING CORRECTION TO CURRENT DISPLACEMENT
+                    element.element_unknown_vector += element_correction
                     # --- INITIALIZE MATRIX AND VECTORS
                     element_stiffness_matrix = np.zeros((element.element_size, element.element_size))
                     element_internal_forces = np.zeros((element.element_size,))
@@ -312,19 +320,9 @@ class Problem:
                     for _qc in range(len(element.cell.quadrature_weights)):
                         _w_q_c = element.cell.quadrature_weights[_qc]
                         _x_q_c = element.cell.quadrature_points[:, _qc]
-                        u_at_gauss = np.zeros((_dx,))
-                        v = self.finite_element.cell_basis_l.evaluate_function(
-                            _x_q_c, element.cell.shape.centroid, element.cell.shape.diameter
-                        )
-                        for eucli_dir in range(_dx):
-                            row_0 = eucli_dir * _cl
-                            row_1 = (eucli_dir + 1) * _cl
-                            u_at_gauss += v @ element.element_unknown_vector[row_0: row_1]
-                        print("U_AT_GAUSS {} : {}".format(_qp, u_at_gauss))
                         # --- COMPUTE STRAINS AND SET THEM IN THE BEHAVIOUR LAW
                         transformation_gradient = element.compute_transformation_gradient(
-                            # self.field, _qc, element_unknown_increment
-                            self.field, _qc, element.element_unknown_vector
+                            self.field, _qc
                         )
                         material.mat_data.s1.gradients[_qp] = transformation_gradient
                         # --- INTEGRATE BEHAVIOUR LAW
@@ -358,21 +356,33 @@ class Problem:
                     # --- COMPUTE RESIDUAL AFTER VOLUMETRIC CONTRIBUTION
                     element_residual = element_internal_forces - element_external_forces
                     # --- CONDENSATION
-                    K_cond, R_cond = element.make_condensation(
-                        self.field, self.finite_element, element_stiffness_matrix, element_residual
-                    )
+                    m_cell_cell = element_stiffness_matrix[:_c0_c, :_c0_c]
+                    m_cell_faces = element_stiffness_matrix[:_c0_c, _c0_c:]
+                    m_faces_cell = element_stiffness_matrix[_c0_c:, :_c0_c]
+                    m_faces_faces = element_stiffness_matrix[_c0_c:, _c0_c:]
+                    v_cell = element_residual[:_c0_c]
+                    v_faces = element_residual[_c0_c:]
+                    m_cell_cell_inv = np.linalg.inv(m_cell_cell)
+                    # ge = m_faces_cell @ m_cell_cell_inv
+                    # gd = (m_faces_cell @ m_cell_cell_inv) @ m_cell_faces
+                    K_cond = m_faces_faces - ((m_faces_cell @ m_cell_cell_inv) @ m_cell_faces)
+                    R_cond = v_faces - (m_faces_cell @ m_cell_cell_inv) @ v_cell
+                    # --- SET CONDENSATION/DECONDENSATION MATRICES
+                    element.m_cell_cell_inv = m_cell_cell_inv
+                    element.m_cell_faces = m_cell_faces
+                    element.v_cell = v_cell
                     # --- ASSEMBLY
                     for _i_local, _i_global in enumerate(element.faces_indices):
-                        _rg0 = (_dx * _fk) * _i_global
-                        _rg1 = (_dx * _fk) * (_i_global + 1)
-                        _re0 = _i_local * (_dx * _fk)
-                        _re1 = (_i_local + 1) * (_dx * _fk)
+                        _rg0 = _i_global * (_fk * _dx)
+                        _rg1 = (_i_global + 1) * (_fk * _dx)
+                        _re0 = _i_local * (_fk * _dx)
+                        _re1 = (_i_local + 1) * (_fk * _dx)
                         residual[_rg0:_rg1] += R_cond[_re0:_re1]
                         for _j_local, _j_global in enumerate(element.faces_indices):
-                            _cg0 = _j_global * (_dx * _fk)
-                            _cg1 = (_j_global + 1) * (_dx * _fk)
-                            _ce0 = _j_local * (_dx * _fk)
-                            _ce1 = (_j_local + 1) * (_dx * _fk)
+                            _cg0 = _j_global * (_fk * _dx)
+                            _cg1 = (_j_global + 1) * (_fk * _dx)
+                            _ce0 = _j_local * (_fk * _dx)
+                            _ce1 = (_j_local + 1) * (_fk * _dx)
                             tangent_matrix[_rg0:_rg1, _cg0:_cg1] += K_cond[_re0:_re1, _ce0:_ce1]
                     # --- SET EXTERNAL FORCES COEFFICIENT
                     if np.max(np.abs(element_external_forces)) > external_forces_coefficient:
@@ -403,8 +413,8 @@ class Problem:
                                     # face_displacement = element_unknown_increment[_r0:_r1]
                                     # face_displacement = np.copy(element_unknown_increment[_c0:_c1])
                                     # face_displacement = element_unknown_increment[_c0:_c1]
-                                    face_lagrange = unknown_vector[_rl0:_rl1]
-                                    face_displacement = unknown_vector[_rg0:_rg1]
+                                    face_lagrange = np.copy(unknown_vector[_rl0:_rl1])
+                                    face_displacement = np.copy(unknown_vector[_rg0:_rg1])
                                     _m_psi_psi_face = np.zeros((_fk, _fk), dtype=real)
                                     _v_face_imposed_displacement = np.zeros((_fk,), dtype=real)
                                     for _qf in range(len(element.faces[f_local].quadrature_weights)):
@@ -496,8 +506,8 @@ class Problem:
                     mgis_bv.update(material.mat_data)
                     # print("ITERATIONS : {}".format(iteration + 1))
                     # print("|||||||||||||||||||||")
-                    self.write_vertex_res_files(file_suffix, unknown_vector)
-                    self.write_quadrature_points_res_files(file_suffix, unknown_vector, material)
+                    self.write_vertex_res_files(file_suffix)
+                    self.write_quadrature_points_res_files(file_suffix, material)
                     # plt.plot(range(len(residual_values)), residual_values)
                     # plt.show()
                     break
@@ -514,307 +524,6 @@ class Problem:
 
         return
 
-    def solve_newton_exact(self, material: Material, reset_displacement_at_time_step: bool):
-        """
-
-        Args:
-            material:
-            reset_displacement_at_time_step:
-
-        Returns:
-
-        """
-        self.clean_res_dir()
-        _dx = self.field.field_dimension
-        _fk = self.finite_element.face_basis_k.dimension
-        _cl = self.finite_element.cell_basis_l.dimension
-        external_forces_coefficient = 1.0
-        normalization_lagrange_coefficient = material.lagrange_parameter
-        # ----------------------------------------------------------------------------------------------------------
-        # SET SYSTEM SIZE
-        # ----------------------------------------------------------------------------------------------------------
-        _constrained_system_size, _system_size = systm.get_total_system_size(
-            self.field, self.finite_element, self.mesh, self.boundary_conditions
-        )
-        unknown_increment = np.zeros((_constrained_system_size))
-        for time_step_index, time_step in enumerate(self.time_steps):
-            # --- SET TEMPERATURE
-            if reset_displacement_at_time_step:
-                unknown_increment = np.zeros((_constrained_system_size))
-            material.set_temperature()
-            # --- PRINT DATA
-            print("-------------")
-            print("TIME_STEP : {}".format(time_step))
-            # --- WRITE RES FILES
-            residual_values = []
-            file_suffix = "{}".format(time_step_index).zfill(6)
-            self.create_vertex_res_files(file_suffix)
-            self.create_quadrature_points_res_files(file_suffix)
-            for iteration in range(self.number_of_iterations):
-                # --------------------------------------------------------------------------------------------------
-                # SET SYSTEM MATRIX AND VECTOR
-                # --------------------------------------------------------------------------------------------------
-                tangent_matrix = np.zeros((_constrained_system_size, _constrained_system_size))
-                residual = np.zeros((_constrained_system_size))
-                # --------------------------------------------------------------------------------------------------
-                # SET TIME INCREMENT
-                # --------------------------------------------------------------------------------------------------
-                if time_step_index == 0:
-                    _dt = time_step
-                else:
-                    _dt = time_step - self.time_steps[time_step_index - 1]
-                _dt = 0.0
-                # --------------------------------------------------------------------------------------------------
-                # FOR ELEMENT LOOP
-                # --------------------------------------------------------------------------------------------------
-                _qp = 0
-                for element in self.elements:
-                    # --- GET ELEMENT UNKNOWN INCREMENT
-                    element_unknown_increment = element.get_element_unknwon_correction(
-                        self.field, self.finite_element, unknown_increment
-                    )
-                    # --- INITIALIZE MATRIX AND VECTORS
-                    element_stiffness_matrix = np.zeros((element.element_size, element.element_size))
-                    element_internal_forces = np.zeros((element.element_size,))
-                    element_external_forces = np.zeros((element.element_size,))
-                    _cs = _cl * _dx
-                    # _nf = (len(element.faces_indices))
-                    # _fs = _nf * _fk * _dx
-                    # cell_unknown_increment = np.zeros((_cs,))
-                    # face_unknown_increment = np.zeros((_fs,))
-                    # face_unknown_increment = element.get_face_unknown_increment(self.field, self.finite_element, unknown_increment)
-                    local_element_unknown_increment = np.copy(element_unknown_increment)
-                    cell_iterations = 10
-                    for cell_iteration in range(cell_iterations):
-                        # --- RUN OVER EACH QUADRATURE POINT
-                        _qp_count = 0
-                        for _qc in range(len(element.cell.quadrature_weights)):
-                            _w_q_c = element.cell.quadrature_weights[_qc]
-                            _x_q_c = element.cell.quadrature_points[:, _qc]
-                            # --- COMPUTE STRAINS AND SET THEM IN THE BEHAVIOUR LAW
-                            # local_element_unknown_increment
-                            # transformation_gradient = element.compute_transformation_gradient(
-                            #     self.field, _qc, element_unknown_increment
-                            # )
-                            transformation_gradient = element.compute_transformation_gradient(
-                                self.field, _qc, local_element_unknown_increment
-                            )
-                            material.mat_data.s1.gradients[_qp] = transformation_gradient
-                            # --- INTEGRATE BEHAVIOUR LAW
-                            integ_res = mgis_bv.integrate(material.mat_data, material.integration_type, _dt, _qp, (_qp + 1))
-                            # --- VOLUMETRIC FORCES
-                            v = self.finite_element.cell_basis_l.evaluate_function(
-                                _x_q_c, element.cell.shape.centroid, element.cell.shape.diameter
-                            )
-                            for load in self.loads:
-                                vl = _w_q_c * v * load.function(time_step, _x_q_c)
-                                _re0 = load.direction * _cl
-                                _re1 = (load.direction + 1) * _cl
-                                element_external_forces[_re0:_re1] += vl
-                            # --- COMPUTE STIFFNESS MATRIX CONTRIBUTION AT QUADRATURE POINT
-                            element_stiffness_matrix += _w_q_c * (
-                                element.gradients_operators[_qc].T
-                                @ material.mat_data.K[_qp]
-                                @ element.gradients_operators[_qc]
-                            )
-                            # --- COMPUTE STIFFNESS MATRIX CONTRIBUTION AT QUADRATURE POINT
-                            element_internal_forces += _w_q_c * (
-                                element.gradients_operators[_qc].T @ material.mat_data.s1.thermodynamic_forces[_qp]
-                            )
-                            _qp += 1
-                            _qp_count += 1
-                        # if cell_iteration == cell_iterations - 1:
-                        _qp -= _qp_count
-                        # --- ADDING STABILIZATION CONTRIBUTION AT THE ELEMENT LEVEL
-                        element_stiffness_matrix += material.stabilization_parameter * element.stabilization_operator
-                        # --- ADDING STABILIZATION CONTRIBUTION AT THE ELEMENT LEVEL
-                        element_internal_forces += (
-                            material.stabilization_parameter * element.stabilization_operator @ element_unknown_increment
-                        )
-                        # --- COMPUTE RESIDUAL AFTER VOLUMETRIC CONTRIBUTION
-                        element_residual = element_internal_forces - element_external_forces
-                        # --- HERE
-                        K_cc = element_stiffness_matrix[:_cs, :_cs]
-                        K_cf = element_stiffness_matrix[:_cs, _cs:]
-                        K_fc = element_stiffness_matrix[_cs:, :_cs]
-                        K_ff = element_stiffness_matrix[_cs:, _cs:]
-                        K_cc_inv = np.linalg.inv(K_cc)
-                        R_c = element_residual[:_cs]
-                        # cell_unknown_increment = np.linalg.solve(-K_cc, R_c)
-                        cell_unknown_correction = -K_cc_inv @ R_c
-                        local_element_unknown_increment[:_cs] += cell_unknown_correction
-                        print("LOCAL_CELL_RES : {}".format(np.max(np.abs(R_c))))
-                    # --- END CELL NEWTON
-                    # local_element_unknown_increment[_cs:] = (K_ff - K_fc @ K_cc_inv @ K_cf) @ element_residual[_cs:]
-                    face_stiffness_matrix = (K_ff - K_fc @ K_cc_inv @ K_cf)
-                    face_residual = element_residual[_cs:]
-                    print("LOCAL_FACE_RES : {}".format(np.max(np.abs(face_residual))))
-                    # local_face_unknwon_increment = (K_ff - K_fc @ K_cc_inv @ K_cf) @ element_residual[_cs:]
-                    for _i_local, _i_global in enumerate(element.faces_indices):
-                        _rg0 = (_dx * _fk) * _i_global
-                        _rg1 = (_dx * _fk) * (_i_global + 1)
-                        _re0 = _i_local * (_dx * _fk)
-                        _re1 = (_i_local + 1) * (_dx * _fk)
-                        residual[_rg0:_rg1] += face_residual[_re0:_re1]
-                        for _j_local, _j_global in enumerate(element.faces_indices):
-                            _cg0 = _j_global * (_dx * _fk)
-                            _cg1 = (_j_global + 1) * (_dx * _fk)
-                            _ce0 = _j_local * (_dx * _fk)
-                            _ce1 = (_j_local + 1) * (_dx * _fk)
-                            tangent_matrix[_rg0:_rg1, _cg0:_cg1] += face_stiffness_matrix[_re0:_re1, _ce0:_ce1]
-                    # --- WRITE FACE INCREMENT ON GLOBAL UNKNOWN INCREMENT
-
-
-                    # # --- CONDENSATION
-                    # K_cond, R_cond = element.make_condensation(
-                    #     self.field, self.finite_element, element_stiffness_matrix, element_residual
-                    # )
-                    # # --- ASSEMBLY
-                    # for _i_local, _i_global in enumerate(element.faces_indices):
-                    #     _rg0 = (_dx * _fk) * _i_global
-                    #     _rg1 = (_dx * _fk) * (_i_global + 1)
-                    #     _re0 = _i_local * (_dx * _fk)
-                    #     _re1 = (_i_local + 1) * (_dx * _fk)
-                    #     residual[_rg0:_rg1] += R_cond[_re0:_re1]
-                    #     for _j_local, _j_global in enumerate(element.faces_indices):
-                    #         _cg0 = _j_global * (_dx * _fk)
-                    #         _cg1 = (_j_global + 1) * (_dx * _fk)
-                    #         _ce0 = _j_local * (_dx * _fk)
-                    #         _ce1 = (_j_local + 1) * (_dx * _fk)
-                    #         tangent_matrix[_rg0:_rg1, _cg0:_cg1] += K_cond[_re0:_re1, _ce0:_ce1]
-                    # --- SET EXTERNAL FORCES COEFFICIENT
-                    if np.max(np.abs(element_external_forces)) > external_forces_coefficient:
-                        external_forces_coefficient = np.max(np.abs(element_external_forces))
-                # --------------------------------------------------------------------------------------------------
-                # FOR FACE LOOP
-                # --------------------------------------------------------------------------------------------------
-                iter_face_constraint = 0
-                for boundary_condition in self.boundary_conditions:
-                    # --- DISPLACEMENT CONDITIONS
-                    if boundary_condition.boundary_type == BoundaryType.DISPLACEMENT:
-                        for element in self.elements:
-                            # element_unknown_increment = element.get_element_unknwon_increment(
-                            #     self.field, self.finite_element, unknown_increment
-                            # )
-                            for f_local, f_global in enumerate(element.faces_indices):
-                                if (
-                                    f_global
-                                    in self.mesh.faces_boundaries_connectivity[boundary_condition.boundary_name]
-                                ):
-                                    _rl0 = _system_size + iter_face_constraint * _fk
-                                    _rl1 = _system_size + (iter_face_constraint + 1) * _fk
-                                    _re0 = _cl * _dx + (f_local * _dx * _fk) + boundary_condition.direction * _fk
-                                    _re1 = _cl * _dx + (f_local * _dx * _fk) + (boundary_condition.direction + 1) * _fk
-                                    _rg0 = f_global * _fk * _dx + _fk * boundary_condition.direction
-                                    _rg1 = f_global * _fk * _dx + _fk * (boundary_condition.direction + 1)
-                                    # -------
-                                    # face_displacement = element_unknown_increment[_r0:_r1]
-                                    # face_displacement = np.copy(element_unknown_increment[_c0:_c1])
-                                    # face_displacement = element_unknown_increment[_c0:_c1]
-                                    face_lagrange = unknown_increment[_rl0:_rl1]
-                                    face_displacement = unknown_increment[_rg0:_rg1]
-                                    _m_psi_psi_face = np.zeros((_fk, _fk), dtype=real)
-                                    _v_face_imposed_displacement = np.zeros((_fk,), dtype=real)
-                                    for _qf in range(len(element.faces[f_local].quadrature_weights)):
-                                        _x_q_f = element.faces[f_local].quadrature_points[:, _qf]
-                                        _w_q_f = element.faces[f_local].quadrature_weights[_qf]
-                                        v = self.finite_element.face_basis_k.evaluate_function(
-                                            _x_q_f,
-                                            element.faces[f_local].shape.centroid,
-                                            element.faces[f_local].shape.diameter,
-                                        )
-                                        _v_face_imposed_displacement += (
-                                            _w_q_f * v * boundary_condition.function(time_step, _x_q_f)
-                                        )
-                                        _m_psi_psi_face += blocks.get_face_mass_matrix_in_face(
-                                            element.faces[f_local],
-                                            self.finite_element.face_basis_k,
-                                            self.finite_element.face_basis_k,
-                                            _x_q_f,
-                                            _w_q_f,
-                                        )
-                                    _m_psi_psi_face_inv = np.linalg.inv(_m_psi_psi_face)
-                                    imposed_face_displacement = _m_psi_psi_face_inv @ _v_face_imposed_displacement
-                                    face_displacement_difference = face_displacement - imposed_face_displacement
-                                    # --- LAGRANGE INTERNAL FORCES PART
-                                    residual[_rg0:_rg1] += normalization_lagrange_coefficient * face_lagrange
-                                    # --- LAGRANGE MULTIPLIERS PART
-                                    residual[_rl0:_rl1] += (
-                                        normalization_lagrange_coefficient * face_displacement_difference
-                                    )
-                                    # --- LAGRANGE MATRIX PART
-                                    tangent_matrix[_rl0:_rl1, _rg0:_rg1] += normalization_lagrange_coefficient * np.eye(
-                                        _fk
-                                    )
-                                    tangent_matrix[_rg0:_rg1, _rl0:_rl1] += normalization_lagrange_coefficient * np.eye(
-                                        _fk
-                                    )
-                                    # --- SET EXTERNAL FORCES COEFFICIENT
-                                    lagrange_external_forces = (
-                                        normalization_lagrange_coefficient * imposed_face_displacement
-                                    )
-                                    if np.max(np.abs(lagrange_external_forces)) > external_forces_coefficient:
-                                        external_forces_coefficient = np.max(np.abs(lagrange_external_forces))
-                                    # if np.max(np.abs(residual[_rg0:_rg1])) > external_forces_coefficient:
-                                    #     external_forces_coefficient = np.max(np.abs(residual[_rg0:_rg1]))
-                                    # --- ITER ON LAGRANGE CONSTRAINED FACE
-                                    iter_face_constraint += 1
-                    elif boundary_condition.boundary_type == BoundaryType.PRESSURE:
-                        for element in self.elements:
-                            # element_unknown_increment = element.get_element_unknwon_increment(
-                            #     self.field, self.finite_element, unknown_increment
-                            # )
-                            for f_local, f_global in enumerate(element.faces_indices):
-                                if (
-                                    f_global
-                                    in self.mesh.faces_boundaries_connectivity[boundary_condition.boundary_name]
-                                ):
-                                    for qf in range(len(element.faces[f_local].quadrature_weights)):
-                                        _x_q_f = element.faces[f_local].quadrature_points[:, qf]
-                                        _w_q_f = element.faces[f_local].quadrature_weights[qf]
-                                        v = self.finite_element.face_basis_k.evaluate_function(
-                                            _x_q_f,
-                                            element.faces[f_local].shape.centroid,
-                                            element.faces[f_local].shape.diameter,
-                                        )
-                                        vf = _w_q_f * v * boundary_condition.function(time_step, _x_q_f)
-                                        # _c0 = _dx * _cl + f_local * _dx * _fk + boundary_condition.direction * _fk
-                                        # _c1 = _dx * _cl + f_local * _dx * _fk + (boundary_condition.direction + 1) * _fk
-                                        _rg0 = f_global * _fk * _dx + _fk * boundary_condition.direction
-                                        _rg1 = f_global * _fk * _dx + _fk * (boundary_condition.direction + 1)
-                                        # residual[_c0:_c1] += vf
-                                        residual[_rg0:_rg1] -= vf
-                                        # --- SET EXTERNAL FORCES COEFFICIENT
-                                        if np.max(np.abs(vf)) > external_forces_coefficient:
-                                            external_forces_coefficient = np.max(np.abs(vf))
-                # --------------------------------------------------------------------------------------------------
-                # RESIDUAL EVALUATION
-                # --------------------------------------------------------------------------------------------------
-                tol_vect = np.ones((_constrained_system_size,), dtype=real) * self.tolerance
-                if external_forces_coefficient == 0.0:
-                    external_forces_coefficient = 1.0
-                res_eval = (1.0 / external_forces_coefficient) * residual
-                print("ITER : {} | RES_MAX : {}".format(str(iteration).zfill(4), max(np.abs(res_eval))))
-                residual_values.append(max(np.abs(res_eval)))
-                if (np.abs(res_eval) < tol_vect).all():
-                    # ----------------------------------------------------------------------------------------------
-                    # UPDATE INTERNAL VARIABLES
-                    # ----------------------------------------------------------------------------------------------
-                    mgis_bv.update(material.mat_data)
-                    print("ITERATIONS : {}".format(iteration + 1))
-                    self.write_vertex_res_files(file_suffix, unknown_increment)
-                    self.write_quadrature_points_res_files(file_suffix, unknown_increment, material)
-                    # plt.plot(range(len(residual_values)), residual_values)
-                    # plt.show()
-                    break
-                else:
-                    # ----------------------------------------------------------------------------------------------
-                    # SOLVE SYSTEM
-                    # ----------------------------------------------------------------------------------------------
-                    sparse_global_matrix = csr_matrix(-tangent_matrix)
-                    correction = spsolve(sparse_global_matrix, residual)
-                    unknown_increment += correction
-        return
 
     def solve_newton_check_1(self, material: Material, reset_displacement_at_time_step: bool):
         """

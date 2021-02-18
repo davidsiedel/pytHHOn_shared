@@ -75,7 +75,7 @@ class Element:
         self.element_unknown_vector = np.zeros((self.element_size,))
         return
 
-    def compute_transformation_gradient(self, field: Field, _qc: int, element_unknown_increment: ndarray):
+    def compute_transformation_gradient(self, field: Field, _qc: int):
         """
 
         Args:
@@ -90,136 +90,15 @@ class Element:
             ones_vect = np.zeros((field.gradient_dimension,))
             for indx in range(3):
                 ones_vect[indx] += 1.0
-            # transformation_gradient = ones_vect + self.gradients_operators[_qc] @ element_unknown_increment
-            transformation_gradient = ones_vect + np.copy(self.gradients_operators[_qc]) @ np.copy(element_unknown_increment)
+            transformation_gradient = ones_vect + self.gradients_operators[_qc] @ self.element_unknown_vector
         elif field.strain_type == StrainType.DISPLACEMENT_SYMMETRIC_GRADIENT:
-            # transformation_gradient = self.gradients_operators[_qc] @ element_unknown_increment
-            transformation_gradient = np.copy(self.gradients_operators[_qc]) @ np.copy(element_unknown_increment)
+            transformation_gradient = self.gradients_operators[_qc] @ self.element_unknown_vector
         else:
             raise KeyError("No such strain type")
         return transformation_gradient
 
-    def get_external_forces(
-        self,
-        field: Field,
-        finite_element: FiniteElement,
-        time_step: float,
-        faces_boundaries_connectivity: Dict[str, List[int]],
-        boundary_conditions: List[BoundaryCondition] = None,
-        loads: List[Load] = None,
-    ) -> ndarray:
-        """
-
-        Args:
-            field:
-            finite_element:
-            time_step:
-            faces_boundaries_connectivity:
-            boundary_conditions:
-            loads:
-
-        Returns:
-
-        """
-        # fe = finite_element
-        _dx = field.field_dimension
-        _cl = finite_element.cell_basis_l.dimension
-        _fk = finite_element.face_basis_k.dimension
-        _nf = len(self.faces)
-        _es = _dx * (_cl + _nf * _fk)
-        external_forces = np.zeros((_es,), dtype=real)
-        if loads is None:
-            pass
-        else:
-            for load in loads:
-                for qc in range(len(self.cell.quadrature_weights)):
-                    _x_q_c = self.cell.quadrature_points[:, qc]
-                    _w_q_c = self.cell.quadrature_weights[qc]
-                    v = finite_element.cell_basis_l.evaluate_function(
-                        _x_q_c, self.cell.shape.centroid, self.cell.shape.diameter
-                    )
-                    #
-                    vl = _w_q_c * v * load.function(time_step, _x_q_c)
-                    _c0 = load.direction * _cl
-                    _c1 = (load.direction + 1) * _cl
-                    external_forces[_c0:_c1] += vl
-        if boundary_conditions is None:
-            pass
-        else:
-            for boundary_condition in boundary_conditions:
-                if boundary_condition.boundary_type == BoundaryType.PRESSURE:
-                    for f_local, f_global in enumerate(self.faces_indices):
-                        if f_global in faces_boundaries_connectivity[boundary_condition.boundary_name]:
-                            for qf in range(len(self.faces[f_local].quadrature_weights)):
-                                _x_q_f = self.faces[f_local].quadrature_points[:, qf]
-                                _w_q_f = self.faces[f_local].quadrature_weights[qf]
-                                v = finite_element.face_basis_k.evaluate_function(
-                                    _x_q_f, self.faces[f_local].shape.centroid, self.faces[f_local].shape.diameter
-                                )
-                                vf = _w_q_f * v * boundary_condition.function(time_step, _x_q_f)
-                                _c0 = _dx * _cl + f_local * _dx * _fk + boundary_condition.direction * _fk
-                                _c1 = _dx * _cl + f_local * _dx * _fk + (boundary_condition.direction + 1) * _fk
-                                external_forces[_c0:_c1] += vf
-        return external_forces
-
-    def get_element_unknwon_correction(
-        self, field: Field, finite_element: FiniteElement, global_vector: ndarray
-    ) -> ndarray:
-        """
-
-        Args:
-            field:
-            finite_element:
-            global_vector:
-
-        Returns:
-
-        """
-        _fk = finite_element.face_basis_k.dimension
-        _dx = field.field_dimension
-        _cl = finite_element.cell_basis_l.dimension
-        _nf = len(self.faces)
-        element_correction = np.zeros((self.element_size,))
-        face_correction = np.zeros((_nf * _fk * _dx,))
-        for i, k in enumerate(self.faces_indices):
-            _c0_g = k * _fk * _dx
-            _c1_g = (k + 1) * _fk * _dx
-            _c0_l = i * _fk * _dx
-            _c1_l = (i + 1) * _fk * _dx
-            face_correction[_c0_l:_c1_l] += global_vector[_c0_g:_c1_g]
-        cell_correction = self.m_cell_cell_inv @ (self.v_cell - self.m_cell_faces @ face_correction)
-        _c0 = _dx * _cl
-        element_correction[:_c0] += cell_correction
-        element_correction[_c0:] += face_correction
-        return element_correction
-
-    def get_face_unknown_increment(
-        self, field: Field, finite_element: FiniteElement, global_vector: ndarray
-    ) -> ndarray:
-        """
-
-        Args:
-            field:
-            finite_element:
-            global_vector:
-
-        Returns:
-
-        """
-        _fk = finite_element.face_basis_k.dimension
-        _dx = field.field_dimension
-        _nf = len(self.faces)
-        face_increment = np.zeros((_nf * _fk * _dx,))
-        for i, k in enumerate(self.faces_indices):
-            _col_strt = k * _fk * _dx
-            _col_stop = (k + 1) * _fk * _dx
-            _col_0 = i * _fk * _dx
-            _col_1 = (i + 1) * _fk * _dx
-            face_increment[_col_0:_col_1] = global_vector[_col_strt:_col_stop]
-        return face_increment
-
     def get_cell_field_increment_value(
-        self, point: ndarray, direction: int, field: Field, finite_element: FiniteElement, global_vector: ndarray
+        self, point: ndarray, direction: int, finite_element: FiniteElement,
     ) -> float:
         """
 
@@ -228,50 +107,193 @@ class Element:
             direction:
             field:
             finite_element:
-            global_vector:
+            element_unknown_vector:
 
         Returns:
 
         """
         _cl = finite_element.cell_basis_l.dimension
-        element_increment = self.get_element_unknwon_correction(field, finite_element, global_vector)
         _c0 = direction * _cl
         _c1 = (direction + 1) * _cl
         v = finite_element.cell_basis_l.evaluate_function(point, self.cell.shape.centroid, self.cell.shape.diameter)
-        return v @ element_increment[_c0:_c1]
+        field_unknown_value = v @ self.element_unknown_vector[_c0:_c1]
+        return field_unknown_value
 
-    def make_condensation(
-        self, field: Field, finite_element: FiniteElement, matrix: ndarray, vector: ndarray
-    ) -> (ndarray, ndarray):
-        """
+    # def compute_transformation_gradient(self, field: Field, _qc: int, element_unknown_increment: ndarray):
+    #     """
+    #
+    #     Args:
+    #         field:
+    #         _qc:
+    #         element_unknown_increment:
+    #
+    #     Returns:
+    #
+    #     """
+    #     if field.strain_type == StrainType.DISPLACEMENT_TRANSFORMATION_GRADIENT:
+    #         ones_vect = np.zeros((field.gradient_dimension,))
+    #         for indx in range(3):
+    #             ones_vect[indx] += 1.0
+    #         transformation_gradient = ones_vect + self.gradients_operators[_qc] @ element_unknown_increment
+    #         # transformation_gradient = ones_vect + np.copy(self.gradients_operators[_qc]) @ np.copy(element_unknown_increment)
+    #     elif field.strain_type == StrainType.DISPLACEMENT_SYMMETRIC_GRADIENT:
+    #         transformation_gradient = self.gradients_operators[_qc] @ element_unknown_increment
+    #         # transformation_gradient = np.copy(self.gradients_operators[_qc]) @ np.copy(element_unknown_increment)
+    #     else:
+    #         raise KeyError("No such strain type")
+    #     return transformation_gradient
 
-        Args:
-            field:
-            finite_element:
-            matrix:
-            vector:
+    # def make_condensation(
+    #     self, field: Field, finite_element: FiniteElement, matrix: ndarray, vector: ndarray
+    # ) -> (ndarray, ndarray):
+    #     """
+    #
+    #     Args:
+    #         field:
+    #         finite_element:
+    #         matrix:
+    #         vector:
+    #
+    #     Returns:
+    #
+    #     """
+    #     _cl = finite_element.cell_basis_l.dimension
+    #     _dx = field.field_dimension
+    #     _col_stop = _dx * _cl
+    #     m_cell_cell = matrix[:_col_stop, :_col_stop]
+    #     m_cell_faces = matrix[:_col_stop, _col_stop:]
+    #     m_faces_cell = matrix[_col_stop:, :_col_stop]
+    #     m_faces_faces = matrix[_col_stop:, _col_stop:]
+    #     v_cell = vector[:_col_stop]
+    #     v_faces = vector[_col_stop:]
+    #     m_cell_cell_inv = np.linalg.inv(m_cell_cell)
+    #     ge = m_faces_cell @ m_cell_cell_inv
+    #     gd = ge @ m_cell_faces
+    #     matrix_cond = m_faces_faces - gd
+    #     vector_cond = v_faces - ge @ v_cell
+    #     self.m_cell_cell_inv = m_cell_cell_inv
+    #     self.m_cell_faces = m_cell_faces
+    #     self.v_cell = v_cell
+    #     return matrix_cond, vector_cond
 
-        Returns:
+    # def get_element_unknwon_correction(
+    #     self, field: Field, finite_element: FiniteElement, global_vector: ndarray
+    # ) -> ndarray:
+    #     """
+    #
+    #     Args:
+    #         field:
+    #         finite_element:
+    #         global_vector:
+    #
+    #     Returns:
+    #
+    #     """
+    #     _fk = finite_element.face_basis_k.dimension
+    #     _dx = field.field_dimension
+    #     _cl = finite_element.cell_basis_l.dimension
+    #     _nf = len(self.faces)
+    #     element_correction = np.zeros((self.element_size,))
+    #     face_correction = np.zeros((_nf * _fk * _dx,))
+    #     for i, k in enumerate(self.faces_indices):
+    #         _c0_g = k * _fk * _dx
+    #         _c1_g = (k + 1) * _fk * _dx
+    #         _c0_l = i * _fk * _dx
+    #         _c1_l = (i + 1) * _fk * _dx
+    #         face_correction[_c0_l:_c1_l] += global_vector[_c0_g:_c1_g]
+    #     cell_correction = self.m_cell_cell_inv @ (self.v_cell - self.m_cell_faces @ face_correction)
+    #     _c0 = _dx * _cl
+    #     element_correction[:_c0] += cell_correction
+    #     element_correction[_c0:] += face_correction
+    #     return element_correction
+    #
+    # def get_face_unknown_increment(
+    #     self, field: Field, finite_element: FiniteElement, global_vector: ndarray
+    # ) -> ndarray:
+    #     """
+    #
+    #     Args:
+    #         field:
+    #         finite_element:
+    #         global_vector:
+    #
+    #     Returns:
+    #
+    #     """
+    #     _fk = finite_element.face_basis_k.dimension
+    #     _dx = field.field_dimension
+    #     _nf = len(self.faces)
+    #     face_increment = np.zeros((_nf * _fk * _dx,))
+    #     for i, k in enumerate(self.faces_indices):
+    #         _col_strt = k * _fk * _dx
+    #         _col_stop = (k + 1) * _fk * _dx
+    #         _col_0 = i * _fk * _dx
+    #         _col_1 = (i + 1) * _fk * _dx
+    #         face_increment[_col_0:_col_1] = global_vector[_col_strt:_col_stop]
+    #     return face_increment
 
-        """
-        _cl = finite_element.cell_basis_l.dimension
-        _dx = field.field_dimension
-        _col_stop = _dx * _cl
-        m_cell_cell = matrix[:_col_stop, :_col_stop]
-        m_cell_faces = matrix[:_col_stop, _col_stop:]
-        m_faces_cell = matrix[_col_stop:, :_col_stop]
-        m_faces_faces = matrix[_col_stop:, _col_stop:]
-        v_cell = vector[:_col_stop]
-        v_faces = vector[_col_stop:]
-        m_cell_cell_inv = np.linalg.inv(m_cell_cell)
-        ge = m_faces_cell @ m_cell_cell_inv
-        gd = ge @ m_cell_faces
-        matrix_cond = m_faces_faces - gd
-        vector_cond = v_faces - ge @ v_cell
-        self.m_cell_cell_inv = m_cell_cell_inv
-        self.m_cell_faces = m_cell_faces
-        self.v_cell = v_cell
-        return matrix_cond, vector_cond
+    # def get_external_forces(
+    #     self,
+    #     field: Field,
+    #     finite_element: FiniteElement,
+    #     time_step: float,
+    #     faces_boundaries_connectivity: Dict[str, List[int]],
+    #     boundary_conditions: List[BoundaryCondition] = None,
+    #     loads: List[Load] = None,
+    # ) -> ndarray:
+    #     """
+    #
+    #     Args:
+    #         field:
+    #         finite_element:
+    #         time_step:
+    #         faces_boundaries_connectivity:
+    #         boundary_conditions:
+    #         loads:
+    #
+    #     Returns:
+    #
+    #     """
+    #     # fe = finite_element
+    #     _dx = field.field_dimension
+    #     _cl = finite_element.cell_basis_l.dimension
+    #     _fk = finite_element.face_basis_k.dimension
+    #     _nf = len(self.faces)
+    #     _es = _dx * (_cl + _nf * _fk)
+    #     external_forces = np.zeros((_es,), dtype=real)
+    #     if loads is None:
+    #         pass
+    #     else:
+    #         for load in loads:
+    #             for qc in range(len(self.cell.quadrature_weights)):
+    #                 _x_q_c = self.cell.quadrature_points[:, qc]
+    #                 _w_q_c = self.cell.quadrature_weights[qc]
+    #                 v = finite_element.cell_basis_l.evaluate_function(
+    #                     _x_q_c, self.cell.shape.centroid, self.cell.shape.diameter
+    #                 )
+    #                 #
+    #                 vl = _w_q_c * v * load.function(time_step, _x_q_c)
+    #                 _c0 = load.direction * _cl
+    #                 _c1 = (load.direction + 1) * _cl
+    #                 external_forces[_c0:_c1] += vl
+    #     if boundary_conditions is None:
+    #         pass
+    #     else:
+    #         for boundary_condition in boundary_conditions:
+    #             if boundary_condition.boundary_type == BoundaryType.PRESSURE:
+    #                 for f_local, f_global in enumerate(self.faces_indices):
+    #                     if f_global in faces_boundaries_connectivity[boundary_condition.boundary_name]:
+    #                         for qf in range(len(self.faces[f_local].quadrature_weights)):
+    #                             _x_q_f = self.faces[f_local].quadrature_points[:, qf]
+    #                             _w_q_f = self.faces[f_local].quadrature_weights[qf]
+    #                             v = finite_element.face_basis_k.evaluate_function(
+    #                                 _x_q_f, self.faces[f_local].shape.centroid, self.faces[f_local].shape.diameter
+    #                             )
+    #                             vf = _w_q_f * v * boundary_condition.function(time_step, _x_q_f)
+    #                             _c0 = _dx * _cl + f_local * _dx * _fk + boundary_condition.direction * _fk
+    #                             _c1 = _dx * _cl + f_local * _dx * _fk + (boundary_condition.direction + 1) * _fk
+    #                             external_forces[_c0:_c1] += vf
+    #     return external_forces
 
     # def make_condensation(self, finite_element: FiniteElement, matrix: ndarray, vector: ndarray, vector2: ndarray) -> (ndarray, ndarray):
     #     cl = finite_element.cell_basis_l.dimension
