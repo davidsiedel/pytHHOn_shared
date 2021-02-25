@@ -99,12 +99,12 @@ class TestMecha(TestCase):
         # MESH
         # ------------------------
         mesh_file_path = (
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_1.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_5.geof"
-            "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_unsorted.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_different.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_different_2.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/rectangle_test.geof"
+            # "../../data/test_data/meshes/square_1.geof"
+            # "../../data/test_data/meshes/square_5.geof"
+            "../../data/test_data/meshes/square_unsorted.geof"
+            # "../../data/test_data/meshes/square_different.geof"
+            # "../../data/test_data/meshes/square_different_2.geof"
+            # "../../data/test_data/meshes/rectangle_test.geof"
         )
         # --------------------------------------------------------------------------------------------------------------
         # FIELD
@@ -154,7 +154,7 @@ class TestMecha(TestCase):
 
         mat = Material(
             nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-            library_path="/home/dsiedel/Projects/pythhon/behaviour/elasticity/src/libBehaviour.so",
+            library_path="../../behaviour/elasticity/src/libBehaviour.so",
             library_name="Elasticity",
             hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
             stabilization_parameter=stabilization_parameter,
@@ -176,9 +176,9 @@ class TestMecha(TestCase):
         # --------------------------------------------------------------------------------------------------------------
 
         mtest_file_path = (
-            "/home/dsiedel/Projects/pythhon/behaviour/testfront/shear_elasticity.res"
+            "../../behaviour/testfront/shear_elasticity.res"
         )
-        hho_file_path = "/home/dsiedel/Projects/pythhon/res"
+        hho_file_path = "../../res"
 
         plot_datat_2(mtest_file_path, hho_file_path, len(time_steps), 4, 5, 7, 8)
         plot_datat_2(mtest_file_path, hho_file_path, len(time_steps), 4, 6, 7, 9)

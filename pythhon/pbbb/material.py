@@ -12,6 +12,7 @@ from pythhon.parameters import *
 
 class Material:
     behaviour: Behaviour
+    behaviour_name: str
     mat_data: MaterialDataManager
     stabilization_parameter: float
     lagrange_parameter: float
@@ -48,6 +49,7 @@ class Material:
             temperature:
         """
         self.nq = nq
+        self.behaviour_name = library_name
         if field.strain_type in [StrainType.DISPLACEMENT_SYMMETRIC_GRADIENT]:
             if field.stress_type == StressType.CAUCHY:
                 self.behaviour = mgis_bv.load(library_path, library_name, hypothesis)
@@ -66,6 +68,7 @@ class Material:
         self.integration_type = integration_type
         self.storage_mode = storage_mode
         self.temperature = temperature
+        # print(self.mat_data.s1.__dir__())
 
     def set_temperature(self):
         """

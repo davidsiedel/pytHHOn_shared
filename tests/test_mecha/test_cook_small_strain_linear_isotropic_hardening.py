@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from matplotlib.colors import LinearSegmentedColormap
 from numpy import ndarray
 
 from pythhon.pbbb.problem import Problem
@@ -28,9 +29,12 @@ class TestMecha(TestCase):
         # F_min = 0.000
         # F_max = 1./16.
         P_min = 0.0
-        P_max = 70.e9 / 16.
-        time_steps = np.linspace(P_min, P_max, 100)
-        iterations = 100
+        P_max = 70.e4 / 16.
+        U_min = 0.001
+        U_max = 4.
+        # time_steps = np.linspace(P_min, P_max, 50)
+        time_steps = np.linspace(U_min, U_max, 10)
+        iterations = 15
 
         # ------------------------
         # LOAD
@@ -60,7 +64,8 @@ class TestMecha(TestCase):
             return 0.0
 
         boundary_conditions = [
-            BoundaryCondition("RIGHT", pull, BoundaryType.PRESSURE, 1),
+            # BoundaryCondition("RIGHT", pull, BoundaryType.PRESSURE, 1),
+            BoundaryCondition("RIGHT", pull, BoundaryType.DISPLACEMENT, 1),
             BoundaryCondition("LEFT", fixed, BoundaryType.DISPLACEMENT, 0),
             BoundaryCondition("LEFT", fixed, BoundaryType.DISPLACEMENT, 1),
         ]
@@ -68,9 +73,9 @@ class TestMecha(TestCase):
         # MESH
         # ------------------------
         mesh_file_path = (
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/cook_1.geof"
-            "/home/dsiedel/Projects/pythhon/data/test_data/meshes/cook5.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/cook_20.geof"
+            # "../../data/test_data/meshes/cook_1.geof"
+            # "../../data/test_data/meshes/cook5.geof"
+            "../../data/test_data/meshes/cook_20.geof"
         )
         # --------------------------------------------------------------------------------------------------------------
         # FIELD
@@ -89,7 +94,7 @@ class TestMecha(TestCase):
         # --------------------------------------------------------------------------------------------------------------
         finite_element = FiniteElement(
             element_type=ElementType.HDG_EQUAL,
-            polynomial_order=polynomial_order,
+            polynomial_order=1,
             euclidean_dimension=2,
             basis_type=BasisType.MONOMIAL
         )
@@ -100,7 +105,7 @@ class TestMecha(TestCase):
         p = Problem(
             mesh_file_path=mesh_file_path,
             field=displacement,
-            polynomial_order=polynomial_order,
+            polynomial_order=finite_element.polynomial_order,
             finite_element=finite_element,
             time_steps=time_steps,
             iterations=iterations,
@@ -114,12 +119,13 @@ class TestMecha(TestCase):
         # MATERIAL
         # --------------------------------------------------------------------------------------------------------------
         parameters = {"YoungModulus": 70.0e9, "PoissonRatio": 0.34, "HardeningSlope": 10.0e9, "YieldStress": 300.0e6}
-        stabilization_parameter = parameters["YoungModulus"] / (1.0 + parameters["PoissonRatio"])
+        stabilization_parameter = 70.e9 * parameters["YoungModulus"] / (1.0 + parameters["PoissonRatio"])
+        stabilization_parameter = 1. * parameters["YoungModulus"] / (1.0 + parameters["PoissonRatio"])
         # stabilization_parameter = 1.e3 * parameters["YoungModulus"]
 
         mat = Material(
             nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-            library_path="/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+            library_path="../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
             library_name="IsotropicLinearHardeningPlasticity",
             hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
             stabilization_parameter=stabilization_parameter,
@@ -129,7 +135,7 @@ class TestMecha(TestCase):
         )
         # mat_0 = Material(
         #     nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     library_path="/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+        #     library_path="../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
         #     library_name="IsotropicLinearHardeningPlasticity",
         #     hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
         #     stabilization_parameter=stabilization_parameter,
@@ -139,7 +145,7 @@ class TestMecha(TestCase):
         # )
         # mat_1 = Material(
         #     nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     library_path="/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+        #     library_path="../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
         #     library_name="IsotropicLinearHardeningPlasticity",
         #     hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
         #     stabilization_parameter=stabilization_parameter,
@@ -155,7 +161,50 @@ class TestMecha(TestCase):
         # p.solve_newton_0(mat, reset_displacement_at_time_step)
         # p.solve_newton_check(mat, mat_0, mat_1, reset_displacement_at_time_step)
         # p.solve_newton_1(mat, reset_displacement_at_time_step)
-        p.solve_newton_check_1(mat, reset_displacement_at_time_step)
-        # p.solve_newton_2(mat, reset_displacement_at_time_step)
+        # p.solve_newton_check_1(mat, reset_displacement_at_time_step)
+        # p.solve_newton_2(mat, verbose=False, check=False)
+        p.solve_newton_exact(mat, verbose=False, check=False)
+
+        res_folder = "../../res"
+
+        def __plot(column: int):
+
+            _, _, filenames = next(walk(res_folder))
+            for time_step_index in range(len(time_steps)):
+                for filename in filenames:
+                    if "{}".format(time_step_index).zfill(6) in filename and "qdp" in filename:
+                        hho_file_path = path.join(res_folder, filename)
+                        with open(hho_file_path, "r") as hho_res_file:
+                            fig, ax0d = plt.subplots(nrows=1, ncols=1)
+                            c_hho = hho_res_file.readlines()
+                            field_label = c_hho[0].split(",")[column]
+                            number_of_points = len(c_hho)-1
+                            eucli_d = displacement.euclidean_dimension
+                            points = np.zeros((eucli_d, number_of_points), dtype=real)
+                            field_vals = np.zeros((number_of_points, ), dtype=real)
+                            for l_count, line in enumerate(c_hho[1:]):
+                                x_coordinates = float(line.split(",")[0])
+                                y_coordinates = float(line.split(",")[1])
+                                field_value = float(line.split(",")[column])
+                                points[0,l_count] += x_coordinates
+                                points[1,l_count] += y_coordinates
+                                field_vals[l_count] += field_value
+                            x, y = points
+                            colors = [(0, 0, 1), (0, 1, 1), (0, 1, 0), (1, 1, 0), (1, 0, 0)]
+                            perso = LinearSegmentedColormap.from_list("perso", colors, N=1000)
+                            vmin = min(field_vals[:])
+                            vmax = max(field_vals[:])
+                            levels = np.linspace(vmin, vmax, 1000, endpoint=True)
+                            ticks = np.linspace(vmin, vmax, 10, endpoint=True)
+                            datad = ax0d.tricontourf(x, y, field_vals[:], cmap=perso, levels=levels)
+                            ax0d.get_xaxis().set_visible(False)
+                            ax0d.get_yaxis().set_visible(False)
+                            ax0d.set_xlabel("map of the domain $\Omega$")
+                            cbar = fig.colorbar(datad, ax=ax0d, ticks=ticks)
+                            cbar.set_label("{}".format(field_label), rotation=270, labelpad=15.0)
+                            # plt.savefig("/home/dsiedel/Projects/pythhon/plots/{}.png".format(time_step))
+                            plt.show()
+
+        __plot(12)
 
         self.assertTrue(True)

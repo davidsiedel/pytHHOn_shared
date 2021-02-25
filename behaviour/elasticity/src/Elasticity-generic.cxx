@@ -106,9 +106,9 @@ MFRONT_SHAREDOBJ const char * Elasticity_Parameters[4] = {"YoungModulus",
 "PoissonRatio","minimal_time_step_scaling_factor","maximal_time_step_scaling_factor"};
 MFRONT_SHAREDOBJ int Elasticity_ParametersTypes [] = {0,0,0,0};
 
-MFRONT_SHAREDOBJ double Elasticity_YoungModulus_ParameterDefaultValue = 70000000000;
+MFRONT_SHAREDOBJ double Elasticity_YoungModulus_ParameterDefaultValue = 1;
 
-MFRONT_SHAREDOBJ double Elasticity_PoissonRatio_ParameterDefaultValue = 0.34;
+MFRONT_SHAREDOBJ double Elasticity_PoissonRatio_ParameterDefaultValue = 0;
 
 MFRONT_SHAREDOBJ double Elasticity_minimal_time_step_scaling_factor_ParameterDefaultValue = 0.1;
 

@@ -1,6 +1,8 @@
 import numpy as np
 from numpy import ndarray
 
+from pythhon.parameters import *
+
 
 def get_domain_barycenter(vertices: ndarray) -> ndarray:
     """
@@ -13,7 +15,7 @@ def get_domain_barycenter(vertices: ndarray) -> ndarray:
     """
     euclidean_dimension = vertices.shape[0]
     number_of_vertices = vertices.shape[1]
-    shape_barycenter = np.zeros((euclidean_dimension,))
+    shape_barycenter = np.zeros((euclidean_dimension,), dtype=real)
     for i in range(vertices.shape[1]):
         vertex = vertices[:, i]
         shape_barycenter += vertex

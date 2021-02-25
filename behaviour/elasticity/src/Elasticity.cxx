@@ -30,8 +30,8 @@ return i;
 
 ElasticityParametersInitializer::ElasticityParametersInitializer()
 {
-this->young = 70000000000;
-this->nu = 0.34;
+this->young = 1;
+this->nu = 0;
 this->minimal_time_step_scaling_factor = 0.1;
 this->maximal_time_step_scaling_factor = 1.7976931348623e+308;
 // Reading parameters from a file

@@ -95,12 +95,12 @@ class TestMecha(TestCase):
         # MESH
         # ------------------------
         mesh_file_path = (
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_1.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_5.geof"
-            "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_unsorted.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_different.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_different_2.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/rectangle_test.geof"
+            # "../../data/test_data/meshes/square_1.geof"
+            # "../../data/test_data/meshes/square_5.geof"
+            "../../data/test_data/meshes/square_unsorted.geof"
+            # "../../data/test_data/meshes/square_different.geof"
+            # "../../data/test_data/meshes/square_different_2.geof"
+            # "../../data/test_data/meshes/rectangle_test.geof"
         )
         # --------------------------------------------------------------------------------------------------------------
         # FIELD
@@ -149,7 +149,7 @@ class TestMecha(TestCase):
 
         mat = Material(
             nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-            library_path="/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+            library_path="../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
             library_name="IsotropicLinearHardeningPlasticity",
             hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
             stabilization_parameter=stabilization_parameter,
@@ -170,9 +170,9 @@ class TestMecha(TestCase):
         # --------------------------------------------------------------------------------------------------------------
 
         mtest_file_path = (
-            "/home/dsiedel/Projects/pythhon/behaviour/testfront/traction_y_small_strain_isotropic_linear_hardening.res"
+            "../../behaviour/testfront/traction_y_small_strain_isotropic_linear_hardening.res"
         )
-        hho_file_path = "/home/dsiedel/Projects/pythhon/res"
+        hho_file_path = "../../res"
 
         # plot_datat_2(mtest_file_path, hho_file_path, len(time_steps), 1, 5, 4, 8)
 
@@ -226,7 +226,7 @@ class TestMecha(TestCase):
         #
         # mat = Material(
         #     p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     "/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+        #     "../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
         #     "IsotropicLinearHardeningPlasticity",
         #     mgis_bv.Hypothesis.PLANESTRAIN,
         #     stabilization_parameter,
@@ -241,8 +241,8 @@ class TestMecha(TestCase):
         # p.solve_newton_0(mat)
         #
         # from pp.plot_check_mtest import plot_data
-        # mtest_file_path = "/home/dsiedel/Projects/pythhon/behaviour/testfront/small_strain_isotropic_linear_hardening.res"
-        # hho_file_path = "/home/dsiedel/Projects/pythhon/res/res.csv"
+        # mtest_file_path = "../../behaviour/testfront/small_strain_isotropic_linear_hardening.res"
+        # hho_file_path = "../../res/res.csv"
         #
         # # TRACTION COMPRESSION
         # plot_data(mtest_file_path, hho_file_path, 1, 5, 1, 2, 9, 10)  # EPS_XX - SIG_XX

@@ -47,5 +47,5 @@ def get_shape_quadrature_data(
     Returns:
 
     """
-    cell_quadrature = ShapeQuadrature(shape_type, shape_vertices, shape_volume, integration_order)
-    return cell_quadrature.quadrature_points, cell_quadrature.quadrature_weights
+    shape_quadrature = ShapeQuadrature(shape_type, shape_vertices, shape_volume, integration_order)
+    return shape_quadrature.quadrature_points, shape_quadrature.quadrature_weights

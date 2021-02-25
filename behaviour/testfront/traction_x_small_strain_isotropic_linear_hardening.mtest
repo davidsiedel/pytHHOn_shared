@@ -5,7 +5,7 @@
 };
 
 @ModellingHypothesis 'PlaneStrain';
-@Behaviour<generic> '/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so' 'IsotropicLinearHardeningPlasticity';
+@Behaviour<generic> '../small_strain_isotropic_linear_hardening/src/libBehaviour.so' 'IsotropicLinearHardeningPlasticity';
 
 // external state variable
 @ExternalStateVariable 'Temperature' 293.15;

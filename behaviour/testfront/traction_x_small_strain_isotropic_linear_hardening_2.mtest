@@ -1,0 +1,18 @@
+@Author Thomas Helfer;
+@Date   11/02/2021;
+@Description{
+
+};
+
+@ModellingHypothesis 'PlaneStrain';
+@Behaviour<generic> '../small_strain_isotropic_linear_hardening/src/libBehaviour.so' 'IsotropicLinearHardeningPlasticity';
+
+// external state variable
+@ExternalStateVariable 'Temperature' 293.15;
+
+@ImposedStrain 'EXX' {
+  1 : 0.00,
+  2 : 0.01
+};
+
+@Times{1, 2 in 20};

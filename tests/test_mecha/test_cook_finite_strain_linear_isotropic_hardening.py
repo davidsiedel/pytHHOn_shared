@@ -67,7 +67,7 @@ class TestMecha(TestCase):
         # MESH
         # ------------------------
         mesh_file_path = (
-            "/home/dsiedel/Projects/pythhon/data/test_data/meshes/cook5.geof"
+            "../../data/test_data/meshes/cook5.geof"
         )
         # --------------------------------------------------------------------------------------------------------------
         # FIELD
@@ -116,7 +116,7 @@ class TestMecha(TestCase):
 
         mat = Material(
             nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-            library_path="/home/dsiedel/Projects/pythhon/behaviour/finite_strain_isotropic_linear_hardening/src/libBehaviour.so",
+            library_path="../../behaviour/finite_strain_isotropic_linear_hardening/src/libBehaviour.so",
             library_name="IsotropicLinearHardeningPlasticity",
             hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
             stabilization_parameter=stabilization_parameter,
@@ -138,10 +138,10 @@ class TestMecha(TestCase):
         # # MESH
         # # ------------------------
         # mesh_file_path = (
-        #     # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/cook5.geof"
-        #     # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/cook_20.geof"
-        #     "/home/dsiedel/Projects/pythhon/data/test_data/meshes/rectangle_test.geof"
-        #     # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_5.geof"
+        #     # "../../data/test_data/meshes/cook5.geof"
+        #     # "../../data/test_data/meshes/cook_20.geof"
+        #     "../../data/test_data/meshes/rectangle_test.geof"
+        #     # "../../data/test_data/meshes/square_5.geof"
         # )
         #
         # # ------------------------
@@ -230,7 +230,7 @@ class TestMecha(TestCase):
         #
         # mat = Material(
         #     p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     "/home/dsiedel/Projects/pythhon/behaviour/finite_strain_isotropic_linear_hardening/src/libBehaviour.so",
+        #     "../../behaviour/finite_strain_isotropic_linear_hardening/src/libBehaviour.so",
         #     "IsotropicLinearHardeningPlasticity",
         #     mgis_bv.Hypothesis.PLANESTRAIN,
         #     stabilization_parameter,

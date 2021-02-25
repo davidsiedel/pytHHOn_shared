@@ -44,6 +44,32 @@ class FiniteElement:
             self.cell_basis_r = Basis(
                 polynomial_order + 1, euclidean_dimension, basis_type=basis_type
             )
+        elif element_type == ElementType.HDG_HIGH:
+            self.cell_basis_k = Basis(
+                polynomial_order, euclidean_dimension, basis_type=basis_type
+            )
+            self.cell_basis_l = Basis(
+                polynomial_order + 1, euclidean_dimension, basis_type=basis_type
+            )
+            self.face_basis_k = Basis(
+                polynomial_order, euclidean_dimension - 1, basis_type=basis_type
+            )
+            self.cell_basis_r = Basis(
+                polynomial_order + 1, euclidean_dimension, basis_type=basis_type
+            )
+        elif element_type == ElementType.HDG_LOW:
+            self.cell_basis_k = Basis(
+                polynomial_order, euclidean_dimension, basis_type=basis_type
+            )
+            self.cell_basis_l = Basis(
+                polynomial_order - 1, euclidean_dimension, basis_type=basis_type
+            )
+            self.face_basis_k = Basis(
+                polynomial_order, euclidean_dimension - 1, basis_type=basis_type
+            )
+            self.cell_basis_r = Basis(
+                polynomial_order + 1, euclidean_dimension, basis_type=basis_type
+            )
         else:
             raise KeyError("NO")
         return

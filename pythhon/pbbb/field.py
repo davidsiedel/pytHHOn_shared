@@ -121,7 +121,7 @@ class Field:
                 raise ValueError("The euclidean dimension must be 2 !")
             self.derivation_type = derivation_type
             if self.derivation_type == DerivationType.SYMMETRIC:
-                self.field_dimension = 2
+                self.field_dimension = euclidean_dimension
                 self.gradient_dimension = 4
                 self.voigt_indices = {
                     (0, 0): 0,
@@ -134,7 +134,7 @@ class Field:
                     (0, 1): np.sqrt(2.0)
                 }
             elif self.derivation_type == DerivationType.FULL:
-                self.field_dimension = 2
+                self.field_dimension = euclidean_dimension
                 self.gradient_dimension = 5
                 self.voigt_indices = {
                     (0, 0): 0,

@@ -37,7 +37,11 @@ def get_gradient_operators(field: Field, finite_element: FiniteElement, cell: Ce
             m_mas += get_cell_mass_matrix_in_cell(
                 cell, finite_element.cell_basis_k, finite_element.cell_basis_k, x_q_c, w_q_c
             )
+        if debug_mode == 0:
+            print("CELL MASS MATRIX IN GRADIENT COND :")
+            print("{}".format(np.linalg.cond(m_mas)))
         m_mas_inv = np.linalg.inv(m_mas)
+        b = m_mas_inv @ m_mas
         local_grad_matric = np.zeros((_ck, _es), dtype=real)
         m_adv_j = np.zeros((_ck, _cl), dtype=real)
         m_adv_i = np.zeros((_ck, _cl), dtype=real)
@@ -56,6 +60,7 @@ def get_gradient_operators(field: Field, finite_element: FiniteElement, cell: Ce
         _c0 = j * _cl
         _c1 = (j + 1) * _cl
         local_grad_matric[:, _c0:_c1] += m_adv_i
+        # local_grad_matric[:, _c0:_c1] += m_mas
         for f, face in enumerate(faces):
             dist_in_face = (face.mapping_matrix @ (face.shape.centroid - cell.shape.centroid))[-1]
             if dist_in_face > 0:
@@ -64,6 +69,12 @@ def get_gradient_operators(field: Field, finite_element: FiniteElement, cell: Ce
             else:
                 normal_vector_component_j = -face.mapping_matrix[-1, j]
                 normal_vector_component_i = -face.mapping_matrix[-1, i]
+            # if dist_in_face > 0:
+            #     normal_vector_component_j = -face.mapping_matrix[-1, j]
+            #     normal_vector_component_i = -face.mapping_matrix[-1, i]
+            # else:
+            #     normal_vector_component_j = face.mapping_matrix[-1, j]
+            #     normal_vector_component_i = face.mapping_matrix[-1, i]
             # normal_vector_component_i = 1.0
             # normal_vector_component_j = 1.0
             m_mas_f = np.zeros((_ck, _cl), dtype=real)
@@ -89,59 +100,123 @@ def get_gradient_operators(field: Field, finite_element: FiniteElement, cell: Ce
             _c0 = _dx * _cl + f * _dx * _fk + j * _fk
             _c1 = _dx * _cl + f * _dx * _fk + (j + 1) * _fk
             local_grad_matric[:, _c0:_c1] += m_hyb_f * normal_vector_component_i
-        local_grad_matric = (1.0 / 2.0) * m_mas_inv @ local_grad_matric
+        # local_grad_matric = (1.0 / 2.0) * m_mas_inv @ local_grad_matric
+        local_grad_matric2 = (1.0 / 2.0) * m_mas_inv @ local_grad_matric
         # local_grad_matric = (1.0 / 6.0) * m_mas_inv @ local_grad_matric
         for qc in range(len(cell.quadrature_weights)):
             x_q_c = cell.quadrature_points[:, qc]
             v = finite_element.cell_basis_k.evaluate_function(x_q_c, cell.shape.centroid, cell.shape.diameter)
-            gradient_component = field.voigt_coefficients[key] * v @ local_grad_matric
+            # gradient_component = field.voigt_coefficients[key] * v @ local_grad_matric
+            gradient_component = field.voigt_coefficients[key] * v @ local_grad_matric2
+            # if k == 1 or k == 3:
+            #     gradient_component = np.zeros((_es,))
             gradient_operators[qc, k] += gradient_component
     return gradient_operators
 
 
-def get_stabilization_operator(field: Field, finite_element: FiniteElement, cell: Cell, faces: List[Face]):
-    """
-
-    Args:
-        field:
-        finite_element:
-        cell:
-        faces:
-
-    Returns:
-
-    """
-    _dx = field.field_dimension
-    _cl = finite_element.cell_basis_l.dimension
-    _fk = finite_element.face_basis_k.dimension
-    _nf = len(faces)
-    _es = _dx * (_cl + _nf * _fk)
-    stabilization_operator = np.zeros((_es, _es))
-    for i in range(_dx):
-        for k, face in enumerate(faces):
-            stabilization_op = np.zeros((_fk, _es))
-            m_mas_f = np.zeros((_fk, _fk))
-            m_hyb_f = np.zeros((_fk, _cl))
-            for qf in range(len(face.quadrature_weights)):
-                x_q_f = face.quadrature_points[:, qf]
-                w_q_f = face.quadrature_weights[qf]
-                m_hyb_f_T = get_hybrid_mass_matrix_in_face(
-                    cell, face, finite_element.cell_basis_l, finite_element.face_basis_k, x_q_f, w_q_f
-                )
-                m_hyb_f += m_hyb_f_T.T
-                m_mas_f += get_face_mass_matrix_in_face(
-                    face, finite_element.face_basis_k, finite_element.face_basis_k, x_q_f, w_q_f
-                )
-            col_strt = i * _cl
-            col_stop = (i + 1) * _cl
-            m_mas_f_inv = np.linalg.inv(m_mas_f)
-            stabilization_op[:, col_strt:col_stop] -= m_mas_f_inv @ m_hyb_f
-            col_strt = _dx * _cl + k * _dx * _fk + i * _fk
-            col_stop = _dx * _cl + k * _dx * _fk + (i + 1) * _fk
-            m = np.eye(_fk)
-            stabilization_op[:, col_strt:col_stop] += m
-            stabilization_operator += (1.0 / face.shape.diameter) * stabilization_op.T @ m_mas_f @ stabilization_op
-    return stabilization_operator
+# def get_stabilization_operator(field: Field, finite_element: FiniteElement, cell: Cell, faces: List[Face]):
+#     """
+#
+#     Args:
+#         field:
+#         finite_element:
+#         cell:
+#         faces:
+#
+#     Returns:
+#
+#     """
+#     _dx = field.field_dimension
+#     _cl = finite_element.cell_basis_l.dimension
+#     _fk = finite_element.face_basis_k.dimension
+#     _nf = len(faces)
+#     _es = _dx * (_cl + _nf * _fk)
+#     stabilization_operator = np.zeros((_es, _es))
+#     for i in range(_dx):
+#         for k, face in enumerate(faces):
+#             stabilization_op = np.zeros((_fk, _es))
+#             m_mas_f = np.zeros((_fk, _fk))
+#             m_hyb_f = np.zeros((_fk, _cl))
+#             for qf in range(len(face.quadrature_weights)):
+#                 x_q_f = face.quadrature_points[:, qf]
+#                 w_q_f = face.quadrature_weights[qf]
+#                 m_hyb_f_T = get_hybrid_mass_matrix_in_face(
+#                     cell, face, finite_element.cell_basis_l, finite_element.face_basis_k, x_q_f, w_q_f
+#                 )
+#                 m_hyb_f += m_hyb_f_T.T
+#                 m_mas_f += get_face_mass_matrix_in_face(
+#                     face, finite_element.face_basis_k, finite_element.face_basis_k, x_q_f, w_q_f
+#                 )
+#             col_strt = i * _cl
+#             col_stop = (i + 1) * _cl
+#             m_mas_f_inv = np.linalg.inv(m_mas_f)
+#             stabilization_op[:, col_strt:col_stop] -= m_mas_f_inv @ m_hyb_f
+#             # stabilization_op[:, col_strt:col_stop] -= m_mas_f @ m_hyb_f
+#             col_strt = _dx * _cl + k * _dx * _fk + i * _fk
+#             col_stop = _dx * _cl + k * _dx * _fk + (i + 1) * _fk
+#             m = np.eye(_fk, dtype=real)
+#             stabilization_op[:, col_strt:col_stop] += m
+#             stabilization_operator += (1.0 / face.shape.diameter) * stabilization_op.T @ m_mas_f @ stabilization_op
+#             # stabilization_operator += stabilization_op.T @ m_mas_f @ stabilization_op
+#             # if i == 0:
+#             #     stabilization_operator *= (1.0 / face.shape.diameter)
+#             # stabilization_operator += (1.0 / face.shape.diameter) * stabilization_op.T @ m_mas_f_inv @ stabilization_op
+#     # for k, face in enumerate(faces):
+#     #     stabilization_operator = (1.0 / face.shape.diameter) * stabilization_operator
+#     return stabilization_operator
+#
+# def get_stab_test(field: Field, finite_element: FiniteElement, cell: Cell, faces: List[Face])-> ndarray:
+#     _dx = field.field_dimension
+#     _cl = finite_element.cell_basis_l.dimension
+#     _fk = finite_element.face_basis_k.dimension
+#     _nf = len(faces)
+#     _es = _dx * (_cl + _nf * _fk)
+#     stabilization_operator = np.zeros((_es, _es))
+#     for _f, face in faces:
+#         face_stabilization_operator = np.zeros((_es, _es))
+#         weighted_face_stabilization_operator = np.zeros((_es, _es))
+#         stabilization_vector_operator = np.zeros((_dx, _es))
+#         x_f = face.shape.centroid
+#         h_f = face.shape.diameter
+#         m_mas_f = np.zeros((_fk, _fk))
+#         m_hyb_f = np.zeros((_fk, _cl))
+#         # m_prj_f = np.zeros((_fk, _cl))
+#         for qf in range(len(face.quadrature_weights)):
+#             x_q_f = face.quadrature_points[:, qf]
+#             w_q_f = face.quadrature_weights[qf]
+#             m_mas_f += get_face_mass_matrix_in_face(
+#                 face, finite_element.face_basis_k, finite_element.face_basis_k, x_q_f, w_q_f
+#             )
+#             m_hyb_f += get_test_mass_matrix_in_face(
+#                 cell, face, finite_element.cell_basis_l, finite_element.face_basis_k, x_q_f, w_q_f
+#             )
+#         m_mas_f_inv = np.linalg.inv(m_mas_f)
+#         m_prj_f = m_mas_f_inv @ m_hyb_f
+#         m_eye_f = np.eye(_fk, dtype=real)
+#         for _x in range(_dx):
+#             stabilization_vector_component_op = np.zeros((_fk, _es))
+#             c0 = _x * _cl
+#             c1 = (_x + 1) * _cl
+#             stabilization_vector_component_op[:,c0:c1] -= m_prj_f
+#             c0 = _dx * _cl + _f * _dx * _fk + _x * _fk
+#             c1 = _dx * _cl + _f * _dx * _fk + (_x + 1) * _fk
+#             stabilization_vector_component_op[:,c0:c1] += m_eye_f
+#             for qf in range(len(face.quadrature_weights)):
+#                 x_q_f = face.quadrature_points[:, qf]
+#                 w_q_f = face.quadrature_weights[qf]
+#                 s_q_f = (face.mapping_matrix @ x_q_f)[:-1]
+#                 s_f = (face.mapping_matrix @ x_f)[:-1]
+#                 v_face = finite_element.face_basis_k.evaluate_function(s_q_f, s_f, h_f)
+#                 # stabilization_vector_component_at_quad = v_face @ stabilization_vector_component_op
+#                 stabilization_vector_operator[_x,:] += v_face @ stabilization_vector_component_op
+#         for qf in range(len(face.quadrature_weights)):
+#             x_q_f = face.quadrature_points[:, qf]
+#             w_q_f = face.quadrature_weights[qf]
+#             m_eye_tan = np.eye(_dx, dtype=real)
+#             face_stabilization_operator += w_q_f * stabilization_vector_operator.T @ m_eye_tan @ stabilization_vector_operator
+#         weighted_face_stabilization_operator = (1.0/h_f) * face_stabilization_operator
+#         stabilization_operator += weighted_face_stabilization_operator
+#     return stabilization_operator
 
 
 # for i in range(dx):

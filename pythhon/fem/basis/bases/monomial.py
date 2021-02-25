@@ -83,7 +83,7 @@ def get_gradient_operator(polynomial_order: int, euclidean_dimension: int, dx: i
         if not coef == 0:
             for j, e in enumerate(exponents):
                 if (e == d_exponents_matrix[i]).all():
-                    gradient_operator[i, j] = coef
+                    gradient_operator[i, j] = float(coef)
                     break
     return gradient_operator
 
@@ -119,6 +119,7 @@ class Monomial:
         """
         point_matrix = np.tile(point, (self.dimension, 1))
         centroid_matrix = np.tile(centroid, (self.dimension, 1))
+        # phi_matrix = (2.0 * (point_matrix - centroid_matrix) / diameter) ** self.exponents
         phi_matrix = ((point_matrix - centroid_matrix) / diameter) ** self.exponents
         phi_vector = np.prod(phi_matrix, axis=1, dtype=real)
         return phi_vector

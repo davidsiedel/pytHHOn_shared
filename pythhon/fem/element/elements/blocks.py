@@ -152,6 +152,34 @@ def get_hybrid_mass_matrix_in_face(
     return m
 
 
+def get_test_mass_matrix_in_face(
+    cell: Cell, face: Face, cell_basis: Basis, face_basis: Basis, x_q_f: ndarray, w_q_f: float,
+) -> ndarray:
+    """
+
+    Args:
+        cell:
+        face:
+        cell_basis:
+        face_basis:
+        x_q_f:
+        w_q_f:
+
+    Returns:
+
+    """
+    v_f = face.shape.diameter
+    x_f = face.shape.centroid
+    v_c = cell.shape.diameter
+    x_c = cell.shape.centroid
+    phi_vector = cell_basis.evaluate_function(x_q_f, x_c, v_c)
+    s_q_f = (face.mapping_matrix @ x_q_f)[:-1]
+    s_f = (face.mapping_matrix @ x_f)[:-1]
+    psi_vector = face_basis.evaluate_function(s_q_f, s_f, v_f)
+    m = w_q_f * np.tensordot(psi_vector, phi_vector, axes=0)
+    return m
+
+
 def get_hybrid_advection_matrix_in_face(
     cell: Cell, face: Face, cell_basis: Basis, face_basis: Basis, dx: int, x_q_f: ndarray, w_q_f: float,
 ) -> ndarray:

@@ -91,12 +91,12 @@ class TestMecha(TestCase):
         # MESH
         # ------------------------
         mesh_file_path = (
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_1.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_5.geof"
-            "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_unsorted.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_different.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/square_different_2.geof"
-            # "/home/dsiedel/Projects/pythhon/data/test_data/meshes/rectangle_test.geof"
+            # "../../data/test_data/meshes/square_1.geof"
+            # "../../data/test_data/meshes/square_5.geof"
+            "../../data/test_data/meshes/square_unsorted.geof"
+            # "../../data/test_data/meshes/square_different.geof"
+            # "../../data/test_data/meshes/square_different_2.geof"
+            # "../../data/test_data/meshes/rectangle_test.geof"
         )
         # --------------------------------------------------------------------------------------------------------------
         # FIELD
@@ -145,7 +145,7 @@ class TestMecha(TestCase):
 
         mat = Material(
             nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-            library_path="/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+            library_path="../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
             library_name="IsotropicLinearHardeningPlasticity",
             hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
             stabilization_parameter=stabilization_parameter,
@@ -159,16 +159,17 @@ class TestMecha(TestCase):
         # --------------------------------------------------------------------------------------------------------------
         reset_displacement_at_time_step = True
         # p.solve_newton_0(mat, reset_displacement_at_time_step)
-        p.solve_newton_1(mat, reset_displacement_at_time_step)
+        # p.solve_newton_1(mat, reset_displacement_at_time_step)
+        p.solve_newton_2(mat)
 
         # --------------------------------------------------------------------------------------------------------------
         # PROCESS RESULTS
         # --------------------------------------------------------------------------------------------------------------
 
         mtest_file_path = (
-            "/home/dsiedel/Projects/pythhon/behaviour/testfront/shear_small_strain_isotropic_linear_hardening.res"
+            "../../behaviour/testfront/shear_small_strain_isotropic_linear_hardening.res"
         )
-        hho_file_path = "/home/dsiedel/Projects/pythhon/res"
+        hho_file_path = "../../res"
 
         # plot_datat_2(mtest_file_path, hho_file_path, len(time_steps), 1, 5, 4, 8)
 
@@ -176,74 +177,5 @@ class TestMecha(TestCase):
         plot_datat_2(mtest_file_path, hho_file_path, len(time_steps), 4, 6, 7, 9)
         plot_datat_2(mtest_file_path, hho_file_path, len(time_steps), 4, 7, 7, 10)
         plot_datat_2(mtest_file_path, hho_file_path, len(time_steps), 4, 8, 7, 11)
-
-        # TRACTION COMPRESSION FINITE STRAIN
-        # plot_data(mtest_file_path, hho_file_path, 1, 6, 1, 2, 11, 12)  # EPS_XX - SIG_XX
-        # plot_data(mtest_file_path, hho_file_path, 1, 7, 1, 2, 13, 14)  # EPS_XX - SIG_YY
-        # plot_data(mtest_file_path, hho_file_path, 1, 8, 1, 2, 15, 16)  # EPS_XX - SIG_ZZ
-        # plot_data(mtest_file_path, hho_file_path, 1, 9, 1, 2, 17, 18)  # EPS_XX - SIG_XY
-
-        # # ------------------------
-        # # PROBLEM DATA
-        # # ------------------------
-        # quadrature_type: QuadratureType = QuadratureType.GAUSS
-        # basis_type: BasisType = BasisType.MONOMIAL
-        # element_type: ElementType = ElementType.HDG_EQUAL
-        # field_type: FieldType = FieldType.DISPLACEMENT_SMALL_STRAIN_PLANE_STRAIN
-        #
-        # # ------------------------
-        # # DEFINE PROBLEM
-        # # ------------------------
-        # p = Problem(
-        #     mesh_file_path,
-        #     polynomial_order,
-        #     time_steps,
-        #     iterations,
-        #     boundary_conditions,
-        #     loads=loads,
-        #     quadrature_type=quadrature_type,
-        #     basis_type=basis_type,
-        #     element_type=element_type,
-        #     field_type=field_type,
-        #     tolerance=1.e-4
-        # )
-
-        # # ------------------------
-        # # MATERIAL
-        # # ------------------------
-        # parameters = {
-        #     "YoungModulus": 70.0e9,
-        #     "PoissonRatio": 0.34,
-        #     "HardeningSlope": 10.0e9,
-        #     "YieldStress": 300.0e6,
-        # }
-        # stabilization_parameter = parameters["YoungModulus"] / (1. + parameters["PoissonRatio"])
-        # # stabilization_parameter = parameters["YoungModulus"]
-        #
-        # mat = Material(
-        #     p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     "/home/dsiedel/Projects/pythhon/behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
-        #     "IsotropicLinearHardeningPlasticity",
-        #     mgis_bv.Hypothesis.PLANESTRAIN,
-        #     stabilization_parameter,
-        #     field_type,
-        #     parameters=None,
-        #     # finite_strains=False
-        # )
-
-        # # ------------------------
-        # # LAUNCH
-        # # ------------------------
-        # p.solve_newton_0(mat)
-        #
-        # from pp.plot_check_mtest import plot_data
-        # mtest_file_path = "/home/dsiedel/Projects/pythhon/behaviour/testfront/small_strain_isotropic_linear_hardening.res"
-        # hho_file_path = "/home/dsiedel/Projects/pythhon/res/res.csv"
-        #
-        # # TRACTION COMPRESSION
-        # plot_data(mtest_file_path, hho_file_path, 1, 5, 1, 2, 9, 10)  # EPS_XX - SIG_XX
-        # plot_data(mtest_file_path, hho_file_path, 1, 6, 1, 2, 11, 12)  # EPS_XX - SIG_YY
-        # plot_data(mtest_file_path, hho_file_path, 1, 7, 1, 2, 13, 14)  # EPS_XX - SIG_ZZ
-        # plot_data(mtest_file_path, hho_file_path, 1, 8, 1, 2, 15, 16)  # EPS_XX - SIG_XY
 
         self.assertTrue(True)

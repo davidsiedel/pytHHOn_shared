@@ -21,7 +21,7 @@ def plot_datat_2(
             if line[0] == "#":
                 alpha = line.split("column:")
                 labels.append(alpha[1].replace("\n", ""))
-        line_start = len(labels)
+        line_start = len(labels) + 1
         for time, line in enumerate(c[line_start:]):
             m_x_data.append(float(line.split(" ")[m_x_inedx]))
             m_y_data.append(float(line.split(" ")[m_y_index]) / coef)
@@ -66,6 +66,7 @@ def plot_datat_2(
     plt.legend()
     # plt.ylim(-0.35, 0.35) #TRACTION
     # plt.ylim(-200.0, 200.0)  # SHEAR
+    plt.ylim(-400.0, 400.0)  # SHEAR
     # plt.xlim(-0.05, 0.05)
     plt.grid()
     plt.show()

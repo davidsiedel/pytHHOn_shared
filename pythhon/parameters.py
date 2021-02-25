@@ -4,12 +4,14 @@ import pathlib
 import shutil
 import os
 
-real = np.float64
+# real = np.float64
+real = float
 # real = np.float32
 # intg = np.uint8
 intg = int
 size_type = np.uint8
 
+debug_mode = -1
 
 class BoundaryType(Enum):
     DISPLACEMENT = "DISPLACEMENT"
@@ -93,7 +95,6 @@ def get_project_path():
 
 def get_res_file_path(res_file_name: str, suffix: str):
     project_path = get_project_path()
-    print(project_path)
     return os.path.join(project_path, "res/{}_{}.txt".format(res_file_name, suffix))
 
 

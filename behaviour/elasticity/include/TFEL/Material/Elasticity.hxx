@@ -175,14 +175,14 @@ private :
 
 
 
-#line 16 "ela.mfront"
+#line 18 "ela.mfront"
 stress lambda;
-#line 16 "ela.mfront"
+#line 18 "ela.mfront"
 stress mu;
 
-#line 10 "ela.mfront"
+#line 11 "ela.mfront"
 real young;
-#line 12 "ela.mfront"
+#line 14 "ela.mfront"
 real nu;
 real minimal_time_step_scaling_factor;
 real maximal_time_step_scaling_factor;
@@ -264,9 +264,9 @@ void initialize(){
 using namespace std;
 using namespace tfel::math;
 using std::vector;
-#line 19 "ela.mfront"
+#line 21 "ela.mfront"
 this->lambda = computeLambda(this->young,this->nu);
-#line 20 "ela.mfront"
+#line 22 "ela.mfront"
 this->mu = computeMu(this->young,this->nu);
 }
 
@@ -299,9 +299,9 @@ using namespace tfel::math;
 using std::vector;
 tfel::raise_if(smflag!=MechanicalBehaviour<MechanicalBehaviourBase::STANDARDSTRAINBASEDBEHAVIOUR,hypothesis,Type,false>::STANDARDTANGENTOPERATOR,
 "invalid prediction operator flag");
-#line 24 "ela.mfront"
+#line 26 "ela.mfront"
 static_cast<void>(smt);
-#line 25 "ela.mfront"
+#line 27 "ela.mfront"
 computeAlteredElasticStiffness<hypothesis,real>::exe((this->Dt),(this->lambda),(this->mu));return SUCCESS;
 }
 
@@ -329,9 +329,9 @@ using namespace tfel::math;
 raise_if(smflag!=MechanicalBehaviour<MechanicalBehaviourBase::STANDARDSTRAINBASEDBEHAVIOUR,hypothesis,Type,false>::STANDARDTANGENTOPERATOR,
 "invalid tangent operator flag");
 bool computeTangentOperator_ = smt!=NOSTIFFNESSREQUESTED;
-#line 29 "ela.mfront"
+#line 31 "ela.mfront"
 this->sig = this->lambda * trace(this->eto + this->deto) * StrainStensor::Id() +
-#line 30 "ela.mfront"
+#line 32 "ela.mfront"
 2 * this->mu * (this->eto + this->deto);
 this->updateIntegrationVariables();
 this->updateStateVariables();
@@ -376,9 +376,9 @@ bool computeConsistentTangentOperator(const SMType smt){
 using namespace std;
 using namespace tfel::math;
 using std::vector;
-#line 34 "ela.mfront"
+#line 36 "ela.mfront"
 static_cast<void>(smt);
-#line 35 "ela.mfront"
+#line 37 "ela.mfront"
 this->Dt = this->lambda * Stensor4::IxI() + 2 * this->mu * Stensor4::Id();
 return true;
 }

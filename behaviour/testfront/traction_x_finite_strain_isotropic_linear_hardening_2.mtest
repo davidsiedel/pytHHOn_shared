@@ -1,0 +1,21 @@
+@Author Thomas Helfer;
+@Date   11/02/2021;
+@Description{
+
+};
+
+@ModellingHypothesis 'PlaneStrain';
+@Behaviour<generic> '../finite_strain_isotropic_linear_hardening/src/libBehaviour.so' 'IsotropicLinearHardeningPlasticity';
+
+// external state variable
+@ExternalStateVariable 'Temperature' 293.15;
+
+@ImposedDeformationGradient 'FXX' {
+  0 : 1,
+  1 : 1.008
+};
+
+@ImposedDeformationGradient 'FXY' 0.;
+@ImposedDeformationGradient 'FYX' 0.;
+
+@Times{0, 1 in 8};
