@@ -233,7 +233,7 @@ class TestMecha(TestCase):
         #
         # mat = Material(
         #     p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     "../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+        #     "../../behaviour/behaviour/src/libBehaviour.so",
         #     "IsotropicLinearHardeningPlasticity",
         #     mgis_bv.Hypothesis.PLANESTRAIN,
         #     stabilization_parameter,
@@ -248,7 +248,7 @@ class TestMecha(TestCase):
         # p.solve_newton_0(mat)
         #
         # from pp.plot_check_mtest import plot_data
-        # mtest_file_path = "../../behaviour/testfront/small_strain_isotropic_linear_hardening.res"
+        # mtest_file_path = "../../behaviour/testfront/behaviour.res"
         # hho_file_path = "../../res/res.csv"
         #
         # # TRACTION COMPRESSION

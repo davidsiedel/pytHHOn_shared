@@ -28,13 +28,13 @@ class TestMecha(TestCase):
         # ------------------------
         # F_min = 0.000
         # F_max = 1./16.
-        P_min = 0.0
-        P_max = 70.e4 / 16.
+        P_min = 0.01
+        P_max = 70.e7 / 16.
         U_min = 0.001
-        U_max = 4.
-        # time_steps = np.linspace(P_min, P_max, 50)
+        U_max = 16.
+        # time_steps = np.linspace(P_min, P_max, 30)
         time_steps = np.linspace(U_min, U_max, 10)
-        iterations = 15
+        iterations = 20
 
         # ------------------------
         # LOAD
@@ -135,7 +135,7 @@ class TestMecha(TestCase):
         )
         # mat_0 = Material(
         #     nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     library_path="../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+        #     library_path="../../behaviour/behaviour/src/libBehaviour.so",
         #     library_name="IsotropicLinearHardeningPlasticity",
         #     hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
         #     stabilization_parameter=stabilization_parameter,
@@ -145,7 +145,7 @@ class TestMecha(TestCase):
         # )
         # mat_1 = Material(
         #     nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
-        #     library_path="../../behaviour/small_strain_isotropic_linear_hardening/src/libBehaviour.so",
+        #     library_path="../../behaviour/behaviour/src/libBehaviour.so",
         #     library_name="IsotropicLinearHardeningPlasticity",
         #     hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
         #     stabilization_parameter=stabilization_parameter,

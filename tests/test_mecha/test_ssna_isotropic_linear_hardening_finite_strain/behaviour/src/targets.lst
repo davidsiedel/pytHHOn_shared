@@ -1,0 +1,60 @@
+{
+library : {
+name   : "Behaviour";
+type   : SHARED_LIBRARY;
+prefix : "lib";
+suffix : "so";
+install_path : "";
+sources : {
+"IsotropicLinearHardeningPlasticity-generic.cxx",
+"IsotropicLinearHardeningPlasticity.cxx",
+"Elasticity-generic.cxx",
+"Elasticity.cxx",
+"FiniteStrainIsotropicLinearHardeningPlasticity-generic.cxx",
+"FiniteStrainIsotropicLinearHardeningPlasticity.cxx"
+};
+cppflags : {
+"$(shell tfel-config --cppflags --compiler-flags)"
+};
+include_directories : {
+"$(shell tfel-config --include-path)"
+};
+link_directories : {
+"$(shell tfel-config --library-path)"
+};
+link_libraries : {
+"$(shell tfel-config --library-dependency --material --mfront-profiling)"
+};
+epts : {
+"IsotropicLinearHardeningPlasticity_AxisymmetricalGeneralisedPlaneStrain",
+"IsotropicLinearHardeningPlasticity_Axisymmetrical",
+"IsotropicLinearHardeningPlasticity_PlaneStrain",
+"IsotropicLinearHardeningPlasticity_GeneralisedPlaneStrain",
+"IsotropicLinearHardeningPlasticity_Tridimensional",
+"Elasticity_AxisymmetricalGeneralisedPlaneStrain",
+"Elasticity_Axisymmetrical",
+"Elasticity_PlaneStrain",
+"Elasticity_GeneralisedPlaneStrain",
+"Elasticity_Tridimensional",
+"FiniteStrainIsotropicLinearHardeningPlasticity_AxisymmetricalGeneralisedPlaneStrain",
+"FiniteStrainIsotropicLinearHardeningPlasticity_Axisymmetrical",
+"FiniteStrainIsotropicLinearHardeningPlasticity_PlaneStrain",
+"FiniteStrainIsotropicLinearHardeningPlasticity_GeneralisedPlaneStrain",
+"FiniteStrainIsotropicLinearHardeningPlasticity_Tridimensional"
+};
+};
+headers : {
+"MFront/GenericBehaviour/IsotropicLinearHardeningPlasticity-generic.hxx",
+"TFEL/Material/IsotropicLinearHardeningPlasticity.hxx",
+"TFEL/Material/IsotropicLinearHardeningPlasticityBehaviourData.hxx",
+"TFEL/Material/IsotropicLinearHardeningPlasticityIntegrationData.hxx",
+"MFront/GenericBehaviour/Elasticity-generic.hxx",
+"TFEL/Material/Elasticity.hxx",
+"TFEL/Material/ElasticityBehaviourData.hxx",
+"TFEL/Material/ElasticityIntegrationData.hxx",
+"MFront/GenericBehaviour/FiniteStrainIsotropicLinearHardeningPlasticity-generic.hxx",
+"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticity.hxx",
+"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticityBehaviourData.hxx",
+"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticityIntegrationData.hxx"
+};
+};

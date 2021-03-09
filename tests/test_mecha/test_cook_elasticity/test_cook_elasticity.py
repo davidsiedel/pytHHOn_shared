@@ -31,7 +31,7 @@ class TestMecha(TestCase):
         P_max = 70.e9 / 16.
         P_min = 0.01
         P_max = 1. / 16.
-        time_steps = np.linspace(P_min, P_max, 3)
+        time_steps = np.linspace(P_min, P_max, 2)
         iterations = 100
 
         # ------------------------
@@ -74,7 +74,11 @@ class TestMecha(TestCase):
         # MESH
         # ------------------------
         mesh_file_path = (
+            # "meshes/cook_01.geof"
+            # "meshes/cook_05.geof"
             "meshes/cook_20.geof"
+            # "meshes/cook_40.geof"
+            # "meshes/cook_31.geof"
         )
         # --------------------------------------------------------------------------------------------------------------
         # FIELD
@@ -118,7 +122,7 @@ class TestMecha(TestCase):
         # MATERIAL
         # --------------------------------------------------------------------------------------------------------------
         parameters = {"YoungModulus": 1.13, "PoissonRatio": 0.4999}
-        stabilization_parameter = 1.e-19 * parameters["YoungModulus"] / (1.0 + parameters["PoissonRatio"])
+        # stabilization_parameter = 1.e-19 * parameters["YoungModulus"] / (1.0 + parameters["PoissonRatio"])
         stabilization_parameter = 1.0 * parameters["YoungModulus"] / (1.0 + parameters["PoissonRatio"])
         # stabilization_parameter = 1.e2 * parameters["YoungModulus"]
 
@@ -136,8 +140,8 @@ class TestMecha(TestCase):
         # --------------------------------------------------------------------------------------------------------------
         # LAUNCH
         # --------------------------------------------------------------------------------------------------------------
-        # p.solve_newton_2(mat, verbose=False, check=False)
-        p.solve_newton_exact(mat, verbose=False, check=False)
+        p.solve_newton_2(mat, verbose=False, check=False)
+        # p.solve_newton_exact(mat, verbose=False, check=False)
 
         res_folder = "../../../res"
 
@@ -168,7 +172,7 @@ class TestMecha(TestCase):
                             perso = LinearSegmentedColormap.from_list("perso", colors, N=1000)
                             vmin = min(field_vals[:])
                             vmax = max(field_vals[:])
-                            levels = np.linspace(vmin, vmax, 1000, endpoint=True)
+                            levels = np.linspace(vmin, vmax, 50, endpoint=True)
                             ticks = np.linspace(vmin, vmax, 10, endpoint=True)
                             datad = ax0d.tricontourf(x, y, field_vals[:], cmap=perso, levels=levels)
                             ax0d.get_xaxis().set_visible(False)
