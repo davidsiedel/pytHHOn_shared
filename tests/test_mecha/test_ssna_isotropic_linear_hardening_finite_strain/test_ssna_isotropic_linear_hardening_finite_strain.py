@@ -80,7 +80,8 @@ class TestMecha(TestCase):
         displacement = Field(
             label="U",
             euclidean_dimension=2,
-            field_type=FieldType.DISPLACEMENT_PLANE_STRAIN,
+            # field_type=FieldType.DISPLACEMENT_PLANE_STRAIN,
+            field_type=FieldType.DISPLACEMENT_PLANE_STRESS,
             strain_type=StrainType.DISPLACEMENT_TRANSFORMATION_GRADIENT,
             stress_type=StressType.PIOLA_KIRCHOFF_1,
             derivation_type=DerivationType.FULL,
@@ -139,9 +140,11 @@ class TestMecha(TestCase):
         mat = Material(
             nq=p.mesh.number_of_cell_quadrature_points_in_mesh,
             library_path="behaviour/src/libBehaviour.so",
-            library_name="IsotropicLinearHardeningPlasticity",
+            # library_name="IsotropicLinearHardeningPlasticity",
             # library_name="Elasticity",
-            hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
+            library_name="FiniteStrainIsotropicLinearHardeningPlasticity2",
+            # hypothesis=mgis_bv.Hypothesis.PLANESTRAIN,
+            hypothesis=mgis_bv.Hypothesis.PLANESTRESS,
             stabilization_parameter=stabilization_parameter,
             lagrange_parameter=parameters["YoungModulus"],
             # lagrange_parameter=1.0,
@@ -330,7 +333,7 @@ class TestMecha(TestCase):
 
         # __plot(15, 149)
         # __plot(15, 149)
-        # __plot_det_f(149)
+        __plot_det_f(149)
         # __plot_reaction_curve()
 
         # def plot_data_2(

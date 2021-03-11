@@ -37,7 +37,7 @@ class TestMecha(TestCase):
         # time_steps = [0.0, 7.e-3, -1.e-2, 2.e-2, -3.e-2, 4.e-2]
         # time_steps = np.array([0.0, 0.01])
         time_steps = np.linspace(0.0, 0.008*1.e9, 30, dtype=real)
-        time_steps = np.linspace(0.0, 0.008, 3, dtype=real)
+        time_steps = np.linspace(0.0, 0.008, 100, dtype=real)
         iterations = 12
         print(time_steps)
 
@@ -84,9 +84,9 @@ class TestMecha(TestCase):
         # MESH
         # ------------------------
         mesh_file_path = (
-            "meshes/square_1.geof"
+            # "meshes/square_1.geof"
             # "meshes/square_5.geof"
-            # "meshes/square_unsorted.geof"
+            "meshes/square_unsorted.geof"
             # "meshes/square_different.geof"
             # "meshes/square_different_2.geof"
             # "meshes/rectangle_test.geof"
@@ -107,11 +107,11 @@ class TestMecha(TestCase):
         # FINITE ELEMENT
         # --------------------------------------------------------------------------------------------------------------
         finite_element = FiniteElement(
-            # element_type=ElementType.HDG_EQUAL,
-            element_type=ElementType.HDG_LOW,
+            element_type=ElementType.HDG_EQUAL,
+            # element_type=ElementType.HDG_LOW,
             # element_type=ElementType.HDG_HIGH,
-            # polynomial_order=1,
-            polynomial_order=2,
+            polynomial_order=1,
+            # polynomial_order=2,
             euclidean_dimension=2,
             basis_type=BasisType.MONOMIAL
         )
@@ -165,7 +165,7 @@ class TestMecha(TestCase):
         # p.solve_newton_0(mat, reset_displacement_at_time_step)
         # p.solve_newton_1(mat)
         # p.solve_newton_1(mat)
-        p.solve_newton_2(mat, verbose=True, check=True)
+        p.solve_newton_2(mat, verbose=False, check=False)
         # p.solve_newton_exact(mat, verbose=False, check=False)
         # p.solve_newton_check_1(mat, reset_displacement_at_time_step)
         # p.solve_newton_exact(mat, reset_displacement_at_time_step)

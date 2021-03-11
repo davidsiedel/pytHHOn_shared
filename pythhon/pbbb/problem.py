@@ -1163,7 +1163,9 @@ class Problem:
                         R_cc = element_residual[:_c0_c]
                         if iteration == 0:
                             local_external_forces_coefficient = 1.0
+                            cell_correction = np.ones((_cl * _dx,), dtype=real)
                         if _local_iteration == 0 and iteration > 0:
+                            cell_correction = np.ones((_cl * _dx,), dtype=real)
                             local_external_forces_coefficient = np.max(np.abs(R_cc))
                             # local_external_forces_coefficient = 1.
                             # if local_external_forces_coefficient == 0.0 or local_external_forces_coefficient < local_tolerance:
@@ -1173,9 +1175,10 @@ class Problem:
                         # print("LOCAL_EXTERNAL_FORCES_COEF : {}".format(local_external_forces_coefficient))
                         R_cell = R_cc
                         local_residual_evaluation = np.max(np.abs(R_cell) / local_external_forces_coefficient)
-                        if local_residual_evaluation > R_cell_value_previous:
-                            print("!!!! RESIUDAL INCREASE :\n {}".format(element.cell.quadrature_points))
-                        R_cell_value_previous = local_residual_evaluation
+                        local_residual_evaluation = np.max(np.abs(cell_correction))
+                        # if local_residual_evaluation > R_cell_value_previous:
+                        #     print("!!!! RESIUDAL INCREASE :\n {}".format(element.cell.quadrature_points))
+                        # R_cell_value_previous = local_residual_evaluation
                         print("LOCAL ITER : {} | RES MAX : {}".format(_local_iteration, local_residual_evaluation))
                         if local_residual_evaluation < local_tolerance:
                             break

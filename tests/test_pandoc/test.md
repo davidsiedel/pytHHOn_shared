@@ -21,5 +21,4 @@ console.log("hello");
 
 ## Image
 
-This image ![the moon](example15.png) will be
 included as a cell attachment.

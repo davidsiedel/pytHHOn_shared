@@ -11,7 +11,9 @@ sources : {
 "Elasticity-generic.cxx",
 "Elasticity.cxx",
 "FiniteStrainIsotropicLinearHardeningPlasticity-generic.cxx",
-"FiniteStrainIsotropicLinearHardeningPlasticity.cxx"
+"FiniteStrainIsotropicLinearHardeningPlasticity.cxx",
+"FiniteStrainIsotropicLinearHardeningPlasticity2-generic.cxx",
+"FiniteStrainIsotropicLinearHardeningPlasticity2.cxx"
 };
 cppflags : {
 "$(shell tfel-config --cppflags --compiler-flags)"
@@ -40,7 +42,14 @@ epts : {
 "FiniteStrainIsotropicLinearHardeningPlasticity_Axisymmetrical",
 "FiniteStrainIsotropicLinearHardeningPlasticity_PlaneStrain",
 "FiniteStrainIsotropicLinearHardeningPlasticity_GeneralisedPlaneStrain",
-"FiniteStrainIsotropicLinearHardeningPlasticity_Tridimensional"
+"FiniteStrainIsotropicLinearHardeningPlasticity_Tridimensional",
+"FiniteStrainIsotropicLinearHardeningPlasticity2_AxisymmetricalGeneralisedPlaneStrain",
+"FiniteStrainIsotropicLinearHardeningPlasticity2_AxisymmetricalGeneralisedPlaneStress",
+"FiniteStrainIsotropicLinearHardeningPlasticity2_Axisymmetrical",
+"FiniteStrainIsotropicLinearHardeningPlasticity2_PlaneStress",
+"FiniteStrainIsotropicLinearHardeningPlasticity2_PlaneStrain",
+"FiniteStrainIsotropicLinearHardeningPlasticity2_GeneralisedPlaneStrain",
+"FiniteStrainIsotropicLinearHardeningPlasticity2_Tridimensional"
 };
 };
 headers : {
@@ -55,6 +64,10 @@ headers : {
 "MFront/GenericBehaviour/FiniteStrainIsotropicLinearHardeningPlasticity-generic.hxx",
 "TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticity.hxx",
 "TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticityBehaviourData.hxx",
-"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticityIntegrationData.hxx"
+"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticityIntegrationData.hxx",
+"MFront/GenericBehaviour/FiniteStrainIsotropicLinearHardeningPlasticity2-generic.hxx",
+"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticity2.hxx",
+"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticity2BehaviourData.hxx",
+"TFEL/Material/FiniteStrainIsotropicLinearHardeningPlasticity2IntegrationData.hxx"
 };
 };

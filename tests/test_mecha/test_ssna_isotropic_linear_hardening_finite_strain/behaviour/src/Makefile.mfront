@@ -12,7 +12,7 @@ INCLUDES := -I../include \
 
 CXXFLAGS := -Wall -Wfatal-errors -ansi $(shell tfel-config --oflags) -fPIC $(INCLUDES) 
 
-SRCCXX = Elasticity-generic.cxx Elasticity.cxx FiniteStrainIsotropicLinearHardeningPlasticity-generic.cxx FiniteStrainIsotropicLinearHardeningPlasticity.cxx IsotropicLinearHardeningPlasticity-generic.cxx IsotropicLinearHardeningPlasticity.cxx
+SRCCXX = Elasticity-generic.cxx Elasticity.cxx FiniteStrainIsotropicLinearHardeningPlasticity-generic.cxx FiniteStrainIsotropicLinearHardeningPlasticity.cxx FiniteStrainIsotropicLinearHardeningPlasticity2-generic.cxx FiniteStrainIsotropicLinearHardeningPlasticity2.cxx IsotropicLinearHardeningPlasticity-generic.cxx IsotropicLinearHardeningPlasticity.cxx
 
 makefiles1 = $(SRCCXX:.cxx=.d)
 makefiles2 = $(makefiles1:.cpp=.d)
@@ -22,7 +22,7 @@ makefiles  = $(makefiles2)
 
 all : libBehaviour.so 
 
-libBehaviour.so : IsotropicLinearHardeningPlasticity-generic.o IsotropicLinearHardeningPlasticity.o Elasticity-generic.o Elasticity.o FiniteStrainIsotropicLinearHardeningPlasticity-generic.o FiniteStrainIsotropicLinearHardeningPlasticity.o 
+libBehaviour.so : IsotropicLinearHardeningPlasticity-generic.o IsotropicLinearHardeningPlasticity.o Elasticity-generic.o Elasticity.o FiniteStrainIsotropicLinearHardeningPlasticity-generic.o FiniteStrainIsotropicLinearHardeningPlasticity.o FiniteStrainIsotropicLinearHardeningPlasticity2-generic.o FiniteStrainIsotropicLinearHardeningPlasticity2.o 
 	@$(CXX) -shared $^  -o $@ -L"$(strip $(shell tfel-config --library-path))" $(patsubst %,-l%,$(shell tfel-config --library-dependency --material --mfront-profiling)) 
 
 install : 
